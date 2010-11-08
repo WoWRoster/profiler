@@ -927,14 +927,20 @@ function wowroster:ScanGlyphs(startGlyph)
 		if( startGlyph==numGlyphs or stat["Glyphs"]==0 ) then
 			local structGlyph=wowroster.db["Glyphs"];
 			for index=startGlyph,numGlyphs do
-				local enabled, glyphType, glyphSpell, icon = GetGlyphSocketInfo(index);
+				--local enabled, glyphType, glyphSpell, icon = GetGlyphSocketInfo(index);
+				local enabled, glyphType, glyphTooltipIndex, glyphSpell, icon = GetGlyphSocketInfo(index);
 				if(enabled == 1 and glyphSpell) then
+					
+					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
 					GameTooltip:SetGlyph(index);
+					tooltip = wowroster.scantooltip2()
+					GameTooltip:Hide()
+					name, rank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = GetSpellInfo(glyphSpell)
 					structGlyph[index] = {
-						Name	= GetSpellInfo(glyphSpell),
+						Name	= name,
 						Type	= glyphType,
 						Icon	= wowroster.scanIcon(icon),
-						Tooltip	= wowroster.scantooltip2(),
+						Tooltip	= tooltip,
 					};
 					stat["Glyphs"] = stat["Glyphs"]+1;
 				else
@@ -959,12 +965,17 @@ function wowroster:ScanGlyphs(startGlyph)
 			for index=1, GetNumGlyphSockets() do
 				local enabled, glyphType, glyphSpell, icon = GetGlyphSocketInfo(index,TalentGroup);
 				if(enabled == 1 and glyphSpell) then
-					GameTooltip:SetGlyph(index,TalentGroup);
+					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
+					GameTooltip:SetGlyph(index);
+					local name, link = GameTooltip:GetItem()
+					tooltip = wowroster.scantooltip2()
+					GameTooltip:Hide()
+					name, rank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = GetSpellInfo(glyphSpell)
 					structGlyphs[index] = {
-						Name	= GetSpellInfo(glyphSpell),
+						Name	= name,
 						Type	= glyphType,
 						Icon	= wowroster.scanIcon(icon),
-						Tooltip	= wowroster.scantooltip2(),
+						Tooltip	= tooltip,
 					};
 					stat["Glyphs"] = stat["Glyphs"]+1;
 				else
@@ -2184,5 +2195,5 @@ wowroster.GetSystem = function()
 	if(not sys) then sys="" end return sys;
 end
 function wowroster:Print(...)
-	print("|cff33ff99WoW Roster CP|r:", ...)
+	print("|cff33ff99WoWR-P|r:", ...)
 end
