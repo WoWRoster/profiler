@@ -963,7 +963,7 @@ function wowroster:ScanGlyphs(startGlyph)
 		--if( startGlyph==numGlyphs or stat["Glyphs"]==0 ) then
 			local structGlyphs={};
 			for index=1, GetNumGlyphSockets() do
-				ocal enabled, glyphType, glyphTooltipIndex, glyphSpell, icon = GetGlyphSocketInfo(index,TalentGroup);
+				local enabled, glyphType, glyphTooltipIndex, glyphSpell, icon = GetGlyphSocketInfo(index,TalentGroup);
 				if(enabled == 1 and glyphSpell) then
 					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
 					GameTooltip:SetGlyph(index);
