@@ -1,0 +1,11 @@
+## Interface: 40000
+## Title: WoW Roster CP
+## Notes: used to export info out of game for the wow roster website.
+## Author: Ulminia (Joseph Foster
+## Version: 0.1
+## SavedVariables: wowrpref,cpProfile
+
+embeds.xml
+
+Core.lua
+rpgo.core.lua
