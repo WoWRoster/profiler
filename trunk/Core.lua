@@ -10,7 +10,7 @@ local f = CreateFrame('GameTooltip', 'MyTooltip', UIParent, 'GameTooltipTemplate
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
-
+wowroster.class = {WARRIOR=1,PALADIN=2,HUNTER=3,ROGUE=4,PRIEST=5,DEATHKNIGHT=6,SHAMAN=7,MAGE=8,WARLOCK=9,DRUID=11};
 local stat = {
 		_loaded=nil,_lock=nil,_bag=nil,_bank=nil,_mail=nil,
 		_server=GetRealmName(),_player=UnitName("player"),_class=class,
@@ -141,7 +141,23 @@ function wowroster:OnInitialize()
 	wowroster:InitProfile()
 	--self.db = db
 	wowroster:makeconfig()
-	wowroster.UpdateDate = rpgo.UpdateDate;
+	wowroster.UpdateDate = wowroster.UpdateDate;
+end
+wowroster.UnitClassID = function(classEn)
+	return wowroster.class[classEn];
+end
+wowroster.UpdateDate = function(self,...)
+	if(not wowroster.db) then return; end;
+	local struct=wowroster.db;
+	if ( not struct["timestamp"] ) then struct["timestamp"]={}; end
+	local timestamp = time();
+	local currHour,currMinute=GetGameTime();
+	struct["timestamp"]["init"]={};
+	struct["timestamp"]["init"]["TimeStamp"]=timestamp;
+	struct["timestamp"]["init"]["Date"]=date("%Y-%m-%d %H:%M:%S",timestamp);
+	struct["timestamp"]["init"]["DateUTC"]=date("!%Y-%m-%d %H:%M:%S",timestamp);
+	struct["timestamp"]["init"]["ServerTime"]=format("%02d:%02d",currHour,currMinute);
+	struct["timestamp"]["init"]["datakey"]=wowroster.versionkey();
 end
 --[[
 this function is fired when the paperdaul frame button is pressed
@@ -1445,7 +1461,7 @@ end
 
 
 function wowroster:TRADE_SKILL_SHOW()
-
+--wowroster.db["Professions"] = {};
     local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions();
 	local skillLineName,skillLineRank,skillLineMaxRank=GetTradeSkillLine();
 	local skills = wowroster.db["Professions"];
