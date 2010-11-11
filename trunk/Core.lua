@@ -36,7 +36,7 @@ local defaults={
 		["talentsfull"]=true,
 		["questsfull"]=false,
 		["debug"]=false,
-		["ver"]=030000,
+		["ver"]=031000,
 		["scan"]={
 			["inventory"]=true,
 			["currency"]=true,
@@ -56,13 +56,17 @@ local defaults={
 			["dsglyphs"] = true,
 			["dsspells"] = true,
 		},
+		["guild"]={
+			["compact"]=true,
+			["title"]=true,
+			["vault"]=true,
+			["vault_log"]=true,
+			["vault_money"]=true,
+			["trades"]=true,
+		},
 	},		
 };
 local UnitPower={"Rage","Focus","Energy","Happiness","Runes","RunicPower"};UnitPower[0]="Mana";
---[[
-local UnitSlots={"HeadSlot","NeckSlot","ShoulderSlot","ShirtSlot","ChestSlot","WaistSlot","LegsSlot","FeetSlot","WristSlot","HandsSlot","Finger0Slot","Finger1Slot","Trinket0Slot","Trinket1Slot","BackSlot","MainHandSlot","SecondaryHandSlot","RangedSlot","TabardSlot"};
-]]--
-
 local UnitSlots={"Head","Neck","Shoulder","Shirt","Chest","Waist","Legs","Feet","Wrist","Hands","Finger0","Finger1","Trinket0","Trinket1","Back","MainHand","SecondaryHand","Ranged","Tabard"};
 local UnitStatName={"Strength","Agility","Stamina","Intellect","Spirit"};
 local UnitSchoolName={"Physical","Holy","Fire","Nature","Frost","Shadow","Arcane"};
@@ -83,13 +87,6 @@ function wowroster:OnEnable()
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
-	-- Trade skill window changes
-    --self:RegisterEvent("TRADE_SKILL_CLOSE")
-    --self:RegisterEvent("TRADE_SKILL_SHOW")
-    --self:RegisterEvent("TRADE_SKILL_UPDATE")
-
-    -- Learning or unlearning a tradeskill
-    --self:RegisterEvent('SKILL_LINES_CHANGED')
 	self.buttons = {}
 	
 	local button = CreateFrame("Button", "GuildProfilerButton", PaperDollFrame, "UIPanelButtonTemplate")
@@ -105,12 +102,8 @@ function wowroster:OnEnable()
 		wowroster:export()
 		end )
 
-	self.buttons.save = button
-	
-	
+	self.buttons.save = button	
 	wowroster:Print("Hello, WoW Roster Profiler Enabled");
-	
-	--self:InitState()
 	wowroster:Print("Hello, WoW Roster Profiler Loaded go to the addons tab in the Interface config section of wow to configure the addon ");
 end
 
@@ -141,12 +134,12 @@ function wowroster:OnInitialize()
 	wowroster:InitProfile()
 	--self.db = db
 	wowroster:makeconfig()
-	wowroster.UpdateDate = wowroster.UpdateDate;
+	wowroster.UpdateDate = wowroster:UpdateDate();
 end
 wowroster.UnitClassID = function(classEn)
 	return wowroster.class[classEn];
 end
-wowroster.UpdateDate = function(self,...)
+function wowroster:UpdateDate()
 	if(not wowroster.db) then return; end;
 	local struct=wowroster.db;
 	if ( not struct["timestamp"] ) then struct["timestamp"]={}; end
@@ -197,7 +190,7 @@ function wowroster:Show()
 					msg=msg..wowroster.StringColorize(rpgo.colorRed," not scanned")..".  - open each profession to scan";
 				else
 					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item..":"..stat["Professions"][item].."";
+						msg=msg .. " " .. item..":"..stat["Professions"][item].." errors("..stat["Professions"][item]["errors"]..")";
 					end
 				end
 			wowroster:Print(msg);
@@ -294,14 +287,12 @@ end
 
 
 function wowroster:BANKFRAME_OPENED()
-			--wowroster.state("_bank",true);
 			wowroster:GetBank();
 		end
 function wowroster:BANKFRAME_CLOSED()
 			wowroster:GetBank();
 			wowroster:GetInventory();
 			wowroster:GetEquipment();
-			--wowroster:State("_bank",nil);
 		end
 function wowroster:makeconfig()
 			
@@ -398,6 +389,40 @@ function wowroster:makeconfig()
 				},	
 			},
 		},
+		
+		guildss ={
+		
+			type = "group",
+			name = "Guild Scanning Options",
+			args = {
+				heading = {
+					type = "description",name = "options for scanning your guild are selected here.",fontSize = "medium",order = 29,	width = "full",
+				},
+				title = {
+					type = "toggle",name = "Ranks",desc = "get member rank info for export?",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+					get = function(info) return wowrpref["guild"][info[#info]] end,order = 30,
+				},
+				compact = {
+					type = "toggle",name = "Compact",desc = "skip empty veriables here",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+					get = function(info) return wowrpref["guild"][info[#info]] end,order = 31,
+				},
+				vault = {
+					type = "toggle",name = "Guild Vault",desc = "scanning of guild vault",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+					get = function(info) return wowrpref["guild"][info[#info]] end,order = 32,
+				},
+				vault_log = {
+					type = "toggle",name = "Guild Vault Tab Logs",desc = "scanning of guild vault tab logs",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+					get = function(info) return wowrpref["guild"][info[#info]] end,order = 33,
+				},
+				vault_money = {
+					type = "toggle",name = "Guild Vault Money Log",desc = "scanning of guild vault money log",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+					get = function(info) return wowrpref["guild"][info[#info]] end,order = 34,
+				},
+				trades = {
+					type = "toggle",name = "Guild Craft",desc = "scan the professions list for storage on the site (no recipes stored)",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+					get = function(info) return wowrpref["guild"][info[#info]] end,order = 35,
+				},
+				
 	},
 	}
 
@@ -643,7 +668,6 @@ function wowroster:ScanCurrency(force)
 		local cnt = 0;
 		local name,isHeader,isExpanded,isUnused,isWatched,count,extraCurrencyType,icon;
 		for idx=1,GetCurrencyListSize() do
-			--name,isHeader,isExpanded,isUnused,isWatched,count,extraCurrencyType,icon = 
 			name, isHeader, isExpanded, isUnused, isWatched, count, extraCurrencyType, icon, itemID = GetCurrencyListInfo(idx);
 			if ( name and name ~= "" ) then
 				if ( isHeader ) then
@@ -651,7 +675,7 @@ function wowroster:ScanCurrency(force)
 					structCurrency[thisHeader]={};
 				else
 					if ( extraCurrencyType ~= 0 ) then
-						--icon = TokenFrameContainer.buttons[idx].icon:GetTexture();
+
 					end
 					GameTooltip:SetCurrencyToken(idx)
 					tooltip = wowroster.scantooltip2()
@@ -663,9 +687,8 @@ function wowroster:ScanCurrency(force)
 						Name	= name,
 						Watched	= isWatched,
 						Count	= count,
-						--Type	= extraCurrencyType,
-						Icon	= wowroster.scanIcon(extraCurrencyType),
-						--Tooltip	= tooltip
+`						Icon	= wowroster.scanIcon(extraCurrencyType),
+						Tooltip	= tooltip,
 					};
 				end
 				cnt=cnt+1;
@@ -678,8 +701,6 @@ function wowroster:ScanCurrency(force)
 	for _,idx in pairs(toCollapse) do
 		ExpandCurrencyList(idx,0);
 	end
-	--wowroster.frame:RegisterEvent("KNOWN_CURRENCY_TYPES_UPDATE");
-	--wowroster.frame:RegisterEvent("CURRENCY_DISPLAY_UPDATE");
 end
 
 function wowroster:GetArena()
@@ -754,7 +775,7 @@ function wowroster:GetQuests(force)
 	end
 
 	local numEntries,numQuests=GetNumQuestLogEntries();
-	--QuestLogFrame\GetDifficultyColor(level)
+
 	local function GetDifficultyValue(level)
 		local levelDiff = level - UnitLevel("player");
 		local color
@@ -878,22 +899,9 @@ function wowroster:ScanCompanions()
 				for companionIndex=1,numCompanions do
 					local creatureID,creatureName,spellID,icon,active = GetCompanionInfo(companionType,companionIndex);
 					if(creatureName and creatureName~=UNKNOWN) then
-						--[[
-						7.BOOKTYPE_SPELL = "spell";
-						8.BOOKTYPE_PROFESSION = "professions";
-						9.BOOKTYPE_PET = "pet";
-						10.BOOKTYPE_MOUNT = "mount";
-						11.BOOKTYPE_COMPANION = "companions";
-						]]--
-						--GameTooltip:SetHyperlink("spell:" ..spellID,BOOKTYPE_SPELL)
-						if (companionType == "Mount") then
-							local book = BOOKTYPE_MOUNT
-						end
-						if (companionType == "Critter") then
-							local book = BOOKTYPE_COMPANION
-						end
+
 						GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
-						GameTooltip:SetSpellByID(spellID)--GameTooltip:SetSpellBookItem(companionIndex,book);
+						GameTooltip:SetSpellByID(spellID)
 						tooltip = wowroster.scantooltip2()
 						GameTooltip:Hide()
 						structCompanion[companionType][companionIndex] = {
@@ -943,7 +951,6 @@ function wowroster:ScanGlyphs(startGlyph)
 		if( startGlyph==numGlyphs or stat["Glyphs"]==0 ) then
 			local structGlyph=wowroster.db["Glyphs"];
 			for index=startGlyph,numGlyphs do
-				--local enabled, glyphType, glyphSpell, icon = GetGlyphSocketInfo(index);
 				local enabled, glyphType, glyphTooltipIndex, glyphSpell, icon = GetGlyphSocketInfo(index);
 				if(enabled == 1 and glyphSpell) then
 					
@@ -975,8 +982,7 @@ function wowroster:ScanGlyphs(startGlyph)
 			numGlyphs=startGlyph;
 			stat["Glyphs"] = stat["Glyphs"]-1;
 		end
-		
-		--if( startGlyph==numGlyphs or stat["Glyphs"]==0 ) then
+
 			local structGlyphs={};
 			for index=1, GetNumGlyphSockets() do
 				local enabled, glyphType, glyphTooltipIndex, glyphSpell, icon = GetGlyphSocketInfo(index,TalentGroup);
@@ -1000,9 +1006,6 @@ function wowroster:ScanGlyphs(startGlyph)
 			end
 			wowroster.db["DualSpec"]["Glyphs"]=structGlyphs;
 			wowroster.db["timestamp"]["Glyphs"]=time();
-		--end
-		
-		
 		end
 		
 	elseif(wowroster.db) then
@@ -1010,13 +1013,6 @@ function wowroster:ScanGlyphs(startGlyph)
 		stat["Glyphs"] = 0;
 	end
 end
-
-
-
-
-
-
-
 
 
 function wowroster:GetEquipment(force)
@@ -1105,8 +1101,6 @@ function wowroster:GetStats(structStats,unit)
 		structStats["Attributes"]["Defense"]["ParryChance"]=wowroster.round(GetParryChance(),2);
 		structStats["Attributes"]["Defense"]["Resilience"]={};
 		structStats["Attributes"]["Defense"]["Resilience"]["Melee"]=GetCombatRating(COMBAT_RATING_RESILIENCE_CRIT_TAKEN);
-		--structStats["Attributes"]["Defense"]["Resilience"]["Ranged"]=GetCombatRating(CR_CRIT_TAKEN_RANGED);
-		--structStats["Attributes"]["Defense"]["Resilience"]["Spell"]=GetCombatRating(CR_CRIT_TAKEN_SPELL);
 
 		structStats["Attributes"]["Resists"]={};
 		for i=1,table.getn(UnitResistanceName) do
@@ -1158,8 +1152,6 @@ function wowroster:GetStats(structStats,unit)
 	function wowroster:GetAttackRating(structAttack,unit,prefix)
 		unit = unit or "player";
 		prefix = prefix or "PlayerStatFrameLeft";
-		--local stat1,stat2,stat3,stat4,stat5,stat6 = unpack(frame);
-		--UpdatePaperdollStats(prefix, "PLAYERSTAT_MELEE_COMBAT"); --PLAYERSTAT_MELEE_COMBAT");
 
 		local stat = getglobal(prefix.."1");
 		local stat1 = getglobal(prefix..1)          
@@ -1168,15 +1160,9 @@ function wowroster:GetStats(structStats,unit)
 		local stat4 = getglobal(prefix..4)          
 		local stat5 = getglobal(prefix..5)          
 		local stat6 = getglobal(prefix..6)  
-		
-		--local statText = getglobal(prefix.."1".."StatText");
-		--:GetName().."StatText");
 
 		local mainHandAttackBase,mainHandAttackMod,offHandAttackBase,offHandAttackMod = UnitAttackBothHands(unit);
 		local speed,offhandSpeed = UnitAttackSpeed(unit);
-		
-	--	local speed, offhandSpeed = UnitAttackSpeed(unit);
-		
 		local minDamage;
 		local maxDamage; 
 		local minOffHandDamage;
@@ -1203,17 +1189,7 @@ function wowroster:GetStats(structStats,unit)
 		structAttack["Melee"]["MainHand"]["AttackSkill"]=mainHandAttackBase+mainHandAttackMod;
 		structAttack["Melee"]["MainHand"]["AttackRating"]=strjoin(":", wowroster.Percent(mainHandAttackBase),wowroster.Percent(mainHandAttackMod),0);
 
-		--local tt=statText:GetText();
-		--tt=wowroster.StripColor(tt);
-		--structAttack["Melee"]["MainHand"]["DamageRange"]=string.gsub(tt,"^(%d+)%s?-%s?(%d+)$","%1:%2");
-
-		--local _,_,dmgMin,dmgMax,dmgBonus = string.find(stat.damage,"^(%d+)%s?%-%s?(%d+)(.*)$");
 		structAttack["Melee"]["MainHand"]["DamageRangeBase"]=strjoin(":",wowroster.Percent(minDamage),wowroster.Percent(maxDamage));
-		--structAttack["Melee"]["MainHand"]["DamageRangeBonus"]=dmgBonus;
-
-		--self:CharacterDamageFrame();
-		--local tt=wowroster.scantooltip2();
-		--structAttack["Melee"]["DamageRangeTooltip"]=wowroster.StripColor(tt);
 
 		if ( offhandSpeed ) then
 		
@@ -1467,6 +1443,7 @@ function wowroster:TRADE_SKILL_SHOW()
 	local skills = wowroster.db["Professions"];
 	local cnt = 0;
 	stat["Professions"][skillLineName] = 0;
+	stat["Professions"][skillLineName]["errors"] = 0;
 	if(not skillLineName or skillLineName=="" or skillLineName==UNKNOWN) then
 		return;
 	end
@@ -1512,7 +1489,7 @@ function wowroster:TRADE_SKILL_SHOW()
 					
 					if (reagentc < numReagents) then
 						--wowroster:Print("".. skillLineName ..":".. skillName .." partical scan. scan agian later");
-						--stat["Professions"][skillLineName]["errors"] = stat["Professions"][skillLineName]["errors"]+1;
+						stat["Professions"][skillLineName]["errors"] = stat["Professions"][skillLineName]["errors"]+1;
 					end
 
 					f:SetOwner(UIParent, 'ANCHOR_NONE')  
@@ -1527,19 +1504,17 @@ function wowroster:TRADE_SKILL_SHOW()
 						numMade = GetTradeSkillNumMade(idx),
 						itemLink= GetTradeSkillItemLink(idx),
 						Reagentsnum = numReagents,
-						reagents = reagentlist, --wowroster.reagents(numReagents,idx,_),
-						skillIcon = wowroster.scanIcon(Icon),--GetTradeSkillIcon(idx) or "",
+						reagents = reagentlist,
+						skillIcon = wowroster.scanIcon(Icon),
 						desc  = description,
-						Tooltip	= tooltip, --tooltip = wowroster.tooltip:SetTradeSkillItem(idx),
+						Tooltip	= tooltip,
 					};
 					cnt = cnt+1;
-					
-					--wowroster:Print("scaned ".. skillLineName ..":".. skillName .." rcount "..reagentc.."");
+
 				end
 			end
 		end	
 		stat["Professions"][skillLineName] = cnt;
-		--wowroster:Print("Scan of ".. skillLineName .." Finished ?errors ("..errors..")");
 		wowroster.db["Professions"] = skills				
 end
 
@@ -1585,7 +1560,6 @@ wowroster.reagents = function(numReagents,skillIndex,reagentIndex)
 			itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount,
 itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(reagentName);
 			itemName = reagentName;
-			--wowroster:Print("scaned ("..numReagents..")reagent:"..itemName.."");
 			reagents[reagentName] = {
 				name = itemName,
 				count = reagentCount,
@@ -1641,7 +1615,6 @@ function wowroster:GetInventory()
 		return;
 	elseif(not wowroster.db["Inventory"]) then
 		wowroster.db["Inventory"]={};
-		--wowroster:State("Inventory",{});
 	end
 	wowroster.db["Inventory"]={};
 	local structInventory=wowroster.db["Inventory"];
@@ -1662,7 +1635,6 @@ function wowroster:GetInventory()
 end
 
 
--- function wowroster:BANKFRAME_OPENED()
 function wowroster:GetBank()
 	if(not wowrpref["scan"]["bank"]) then
 		wowroster.db["Bank"]=nil;
@@ -1702,11 +1674,8 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 			itemIcon="Interface\\Buttons\\"..itemIcon; end
 		GameTooltip:SetText(""..itemName.."",_,_,_,_);
 		GameTooltip:AddLine(format(CONTAINER_SLOTS,wowroster.GetContainerNumSlots(bagid),BAGSLOT));
-		--wowroster:Print("scaned "..itemName.." slot "..bagid.." -.");
 	elseif(bagid==BANK_CONTAINER) then
 		itemName = "Bank Contents";
-		--GameTooltip:ClearLines();
-		--GameTooltip:Hide();
 	elseif(bagid==KEYRING_CONTAINER) then
 		itemName = KEYRING;
 		itemIcon="UI-Button-KeyRing";
@@ -1715,7 +1684,6 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 		GameTooltip:SetText(itemName);
 		tooltip = wowroster.scantooltip2()
 		GameTooltip:Hide()
-		--wowroster:Print("scaned "..itemName.." slot "..bagid.."-.");
 	else
 		local invID = ContainerIDToInventoryID(bagid)
 		itemColor,_,itemID,itemName=wowroster.GetItemInfo( GetInventoryItemLink("player",ContainerIDToInventoryID(bagid)) );
@@ -1724,7 +1692,7 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 		GameTooltip:SetInventoryItem("player",invID)
 		tooltip = wowroster.scantooltip2()
 		GameTooltip:Hide()
-		--wowroster:Print("scaned "..itemName.." slot "..bagid.." - "..invID.."");
+
 	end
 	
 	local bagSlot = GetContainerNumSlots(bagid)
@@ -1751,11 +1719,6 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 			bagInv=bagInv+1;
 		end
 	end
---[[	if(not wowroster:State("_bag")) then
-		wowroster.frame:RegisterEvent("PLAYERBANKSLOTS_CHANGED");
-		wowroster.frame:RegisterEvent("BAG_UPDATE");
-		wowroster:State("_bag",true);
-	end]]--
 	stat["Bag"][bagid]=true;
 	stat[invgrp][bagidx]={slot=bagSlot,inv=bagInv};
 	return container
@@ -1773,7 +1736,6 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		if(not itemName or not itemColor) then
 			itemName,itemColor=wowroster.GetItemInfoTT(self.tooltip);
 		end
-			--GameTooltip:SetInventoryItem("player",index);
 			if(bagid=="player") then
 			
 				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
@@ -1804,12 +1766,11 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		local itemBlock={
 			Name	= itemName,
 			Item	= itemID,
-			--hex = ""..bagid.." - "..slot.."", 
 			Color	= wowroster.scanColor(itemColor),
 			Rarity	= itemRarity,
 			Quantity= numNil(itemcount),
 			Icon	= wowroster.scanIcon(itemtexture or itemTexture),
-			Tooltip	= tooltip, --wowroster.scantooltip2(),
+			Tooltip	= tooltip,
 			Type	= itemType,
 			SubType	= itemSubType,
 			iLevel	= itemLevel,
@@ -1825,8 +1786,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 				end
 			end
 		end
-		--if(self.prefs["fixtooltip"] and itemBlock["Name"]==itemBlock["Tooltip"]) then
-		--	itemBlock["Tooltip"]=nil end
+
 		return itemBlock;
 	end
 	return nil;
@@ -1859,7 +1819,6 @@ function wowroster:GetSpellBook()
 			stat["SpellBook"][spellTabname]=0;
 			cnt=0;
 			for spellId=1+offset,numSpells+offset do
-				--local spellName, spellRank=GetSpellName(spellId,BOOKTYPE_SPELL);
 				local spellName, spellRank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = GetSpellInfo(spellId,BOOKTYPE_SPELL)
 				if ( spellName ) then
 					structSpell[spellTabname]["Spells"][spellName] = wowroster:ScanSpellInfo(spellId,BOOKTYPE_SPELL);
@@ -1877,8 +1836,6 @@ function wowroster:ScanSpellInfo(idx,bookType)
 	if(not idx or not bookType ) then return end
 	
 	local spellName, spellRank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = GetSpellInfo(idx,bookType);
-	--local spellTexture=GetSpellTexture(idx,bookType);
-	--GameTooltip:SetSpell(idx,bookType);
 	
 	GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
 	GameTooltip:SetSpellBookItem(idx,bookType);
@@ -1930,19 +1887,14 @@ function wowroster:GetTalents(unit)
 		petName = UnitName("pet");
 		numPts = GetUnspentTalentPoints(false, true, TlentGroup);
 		numTabs = 1;
-		--to remove
 		wowroster.db["Pets"][petName]["TalentPointsUsed"]=nil;
 		wowroster.db["Pets"][petName]["TalentPoints"]=numPts;
-		--wowroster.db["Pets"][petName]["Talents"]={};
-		--structTalent=wowroster.db["Pets"][petName]["Talents"];
 		state = "PetTalents";
 	else
 		numPts =  GetUnspentTalentPoints(false, false, TalentGroup)--UnitCharacterPoints("player");
 		numTalentGroups = GetNumTalentGroups(false, "player");
 		numTabs=GetNumTalentTabs();
 		wowroster.db["TalentPoints"]=numPts;
-		--wowroster.db["Talents"]={};
-		--structTalent=wowroster.db["Talents"];
 		state = "Talents";
 		
 	end
@@ -1966,9 +1918,7 @@ function wowroster:GetTalents(unit)
 				};
 			for talentIndex=1,GetNumTalents(tabIndex,nil,unit=="pet") do
 			name,iconTexture,tier,column,rank,maxRank,isExceptional,meetsPrereq,previewRank,meetsPreviewPrereq=GetTalentInfo(tabIndex,talentIndex,nil,unit=="pet",nil);
-			--wowroster:Print("talent "..tabName.."-"..name.." "..strjoin(":", rank,maxRank).." "..strjoin(":", tier,column).."")
 				if( name ) then
-					--self.tooltip:SetTalent(tabIndex,talentIndex)
 					structTalent[tabName][name]={
 						Rank	= strjoin(":", rank,maxRank),
 						Location= strjoin(":", tier,column),
@@ -1976,7 +1926,6 @@ function wowroster:GetTalents(unit)
 				end
 			end
 			stat["Talents"][tabName] = pointsSpent;
-			--wowroster.State(state,'++');
 		end
 		if ( unit == "pet" ) then
 			wowroster.db["Pets"][petName]["Talents"]=structTalent;
