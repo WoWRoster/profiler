@@ -1,0 +1,968 @@
+--[[########################################################
+--## Name: GuildProfiler
+--## Author: calvin
+--## Addon Details & License can be found in 'readme.txt'
+--######################################################--]]
+
+--[[########################################################
+--## Variables Init
+--######################################################--]]
+--[[########################################################
+--## RPGOGP object data
+--######################################################--]]
+
+local addon = select(2, ...)
+addon = LibStub("AceAddon-3.0"):NewAddon(addon, "GuildProfiler", "AceEvent-3.0")
+addon.status = {}
+
+local L = addon.L
+local status = addon.status
+local statusLog, logIDs, lastSeenLogID = {}, {}
+
+local waitingForLoad = true
+
+-- Addon loaded
+function addon:OnInitialize()
+	self.defaults = {
+		global = {
+			enabled=true,
+			verbose=false,
+			compact=true,
+			rescan=10,
+			history=true,
+			title=false,
+			lite=true,
+			button=true,
+			debug=false,
+		},
+	}
+	
+	self.db = LibStub:GetLibrary("AceDB-3.0"):New("GuildProfilerDB", self.defaults, true)
+		
+	-- Wait for GuildUI to be loaded
+	self:RegisterMessage("GP_LOADED", "GuildProfilerLoaded")
+	self:RegisterEvent("ADDON_LOADED", function(event, addonLoaded)
+		if( addonLoaded == "Blizzard_GuildUI" and waitingForLoad ) then
+			addon:UnregisterEvent("ADDON_LOADED")
+			addon:UnregisterEvent("GUILD_ROSTER_SHOW")
+			addon:SendMessage("GP_LOADED")
+			waitingForLoad = nil
+		end
+	end)
+	self:RegisterEvent("GUILD_ROSTER_UPDATE", function()
+		if( addonLoaded == "Blizzard_GuildUI" and waitingForLoad ) then
+			if GuildFrame:IsShown() then
+				addon:UnregisterEvent("GUILD_ROSTER_UPDATE")
+				addon:UnregisterEvent("ADDON_LOADED")
+				addon:SendMessage("GP_LOADED")
+				waitingForLoad = nil
+			end
+		end
+	end);
+	
+	if( IsAddOnLoaded("Blizzard_GuildUI") ) then
+		self:UnregisterEvent("ADDON_LOADED")
+		self:SendMessage("GP_LOADED")
+	end
+	
+end
+
+function addon:GuildProfilerLoaded()
+	if not waitingForLoad then return; end
+
+	self.buttons = {}
+
+	-- Tooltips!
+	local function showTooltip(self)
+		GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end
+
+	local function hideTooltip(self)
+		GameTooltip:Hide()
+	end
+	
+	-- Show save for saving
+	local button = CreateFrame("Button", "GuildProfilerButton", GuildFrame, "UIPanelButtonTemplate")
+	button.tooltip = L["Click to export your Guild Profile!"]
+	button.startTooltip = button.tooltip
+	button:SetPoint("TOPRIGHT", GuildFrame, "TOPRIGHT", -30, 0)
+	button:SetWidth(55)
+	button:SetHeight(22)
+	button:SetText(L["save"])
+	button:SetScript("OnEnter", showTooltip)
+	button:SetScript("OnLeave", hideTooltip)
+	button:SetScript("OnClick", function(self)
+		RPGOGP:ForceExport()
+	end )
+
+	self.buttons.save = button
+
+end
+
+RPGOGP = {
+	TITLE		= "GuildProfiler";
+	ABBR		= "GP";
+	PROVIDER	= "rpgo";
+	VERSION		= GetAddOnMetadata("GuildProfiler", "Version");
+	AUTHOR		= GetAddOnMetadata("GuildProfiler", "Author");
+	EMAIL		= GetAddOnMetadata("GuildProfiler", "X-Email");
+	URL			= GetAddOnMetadata("GuildProfiler", "X-Website");
+	DATE		= GetAddOnMetadata("GuildProfiler", "X-Date");
+	PROFILEDB	= "4.0.1";
+	FRAME		= "rpgoGPframe";
+}
+local cfg
+local RPGO_DefaultConfig = {enabled=true,verbose=false,compact=true,rescan=10,history=true,title=false,lite=true,button=true,debug=false};
+RPGOGP.usage={
+	{"/gp","-- usage/help"},
+	{"/gp [on|off]","-- turns on|off"},
+	{"/gp export","-- force export"},
+	{"/gp show","-- show current session scan"},
+};
+--[ChatCommand]
+RPGOGP.command={
+	off =
+		function()
+			RPGOGP:Toggle(false);
+		end,
+	on =
+		function()
+			RPGOGP:Toggle(true);
+		end,
+	show =
+		function()
+			RPGOGP:Show();
+		end,
+	export =
+		function()
+			RPGOGP:EventHandler('RPGOGP_EXPORT');
+		end,
+};
+
+--[[########################################################
+--## rpgoGP Core Functions
+--######################################################--]]
+--[Init]
+function RPGOGP:Init()
+	-- Init Config
+	if (not rpgoGPpref) then
+		rpgoGPpref = {};
+	end
+	cfg = setmetatable(rpgoGPpref,{ __index = RPGO_DefaultConfig });
+
+	SLASH_RPGOGP1="/gp";
+	SLASH_RPGOGP2="/rpgogp";
+	SLASH_RPGOGP3="/gprofiler";
+	SlashCmdList["RPGOGP"] = function(a1) return self:ChatCommand(a1) end;
+
+	--[frame & tooltip]
+	self.frame = CreateFrame("Frame",self.FRAME,GuildFrame);
+	self.frame:RegisterEvent("VARIABLES_LOADED");
+	self.frame:SetScript("OnEvent", function() self:EventHandler(event,arg1,arg2) return end );
+	self.frame:SetScript("OnHide",  function() self:EventHandler('RPGOGP_SCAN') return end );
+
+	--[object functions]
+	self.PrintTitle = rpgo.PrintTitle;
+	self.PrintUsage = rpgo.PrintUsage;
+	self.PrintDebug = rpgo.PrintDebug;
+
+	self.PrefInit = rpgo.PrefInit;
+	self.PrefTidy = rpgo.PrefTidy;
+	self.PrefToggle = rpgo.PrefToggle;
+
+	self.LiteScan = function(self,event)
+		if(event=="RPGOGP_EXPORT") then return false; end
+		if(self.state and not self.state["_loaded"]) then return false; end
+		return rpgo.LiteScan(self);
+	end
+
+	self.RegisterEvents = function(self,flagMode)
+		flagMode = flagMode or (cfg.enabled);
+		self:PrintDebug("RegisterEvents ("..rpgo.PrefColorize(flagMode)..") ");
+		return rpgo.RegisterEvents(self,flagMode);
+	end
+
+	-- tmp prefs
+	--cfg = {enabled=true};
+
+	self.State = rpgo.State;
+	self.UpdateDate = rpgo.UpdateDate;
+end
+
+--[[## Events
+--######################################################--]]
+RPGOGP.event1={
+	VARIABLES_LOADED =
+		function()
+			RPGOGP:InitPref();
+			rpgoGPframe:UnregisterEvent("VARIABLES_LOADED");
+			rpgoGPframe:RegisterEvent("ADDON_LOADED");
+			if(not RPGOGP.prefs or not RPGOGP.prefs.enabled) then return; end
+			RPGOGP.frame:RegisterEvent("PLAYER_GUILD_UPDATE");
+			RPGOGP.frame:RegisterEvent("PLAYER_ENTERING_WORLD");
+			RPGOGP:InitState();
+		end,
+	ADDON_LOADED =
+		function()
+			if(arg1 == "Blizzard_GuildBankUI") then
+				function RPGOGP.GuildBankFrame_OnShow()
+					RPGOGP:ScanGuildBank();
+					rpgo.qInsert(RPGOGP.queue, {"GUILD_ROSTER_UPDATE",RPGOGP.ScanGuildBankQueue}, 1 );
+				end
+				rpgoGPGuildBankFrame = CreateFrame("Frame","rpgoGPGuildBankFrame",GuildBankFrame);
+				rpgoGPGuildBankFrame:SetScript("OnShow", RPGOGP.GuildBankFrame_OnShow );
+				RPGOGP.frame:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED");
+				RPGOGP.frame:RegisterEvent("GUILDBANK_UPDATE_TABS");
+				RPGOGP.frame:RegisterEvent("GUILDBANK_UPDATE_MONEY");
+				RPGOGP.frame:RegisterEvent("GUILDBANKLOG_UPDATE");
+			end
+		end,
+	PLAYER_ENTERING_WORLD =
+		function()
+			return RPGOGP:CheckGuildInfo();
+		end,
+	PLAYER_GUILD_UPDATE =
+		function()
+			return RPGOGP:CheckGuildInfo();
+		end,
+	CHAT_MSG_SYSTEM =
+		function(a1)
+			RPGOGP:ScanSystemMsg(a1);
+			return true;
+		end,
+	GUILD_MOTD =
+		function()
+			RPGOGP:ScanGuildMOTD();
+			return true;
+		end,
+	GUILD_TABARD =
+		function()
+			RPGOGP:ScanGuildTabard();
+			return true;
+		end,
+	GUILDBANK_UPDATE_MONEY =
+		function()
+			RPGOGP:ScanGuildBankMoney();
+			return true;
+		end,
+	GUILD_ROSTER_UPDATE =
+		function(a1)
+			return true;
+		end,
+	GUILDBANKBAGSLOTS_CHANGED =
+		function()
+			return true;
+		end,
+	GUILDBANKLOG_UPDATE =
+		function()
+			return true;
+		end,
+};
+RPGOGP.event2={
+	RPGOGP_SCAN =
+		function()
+			RPGOGP:UpdateProfile();
+		end,
+	RPGOGP_EXPORT =
+		function()
+			RPGOGP:ForceExport();
+		end,
+};
+
+
+RPGOGP.funcs={
+	button =
+		function()
+			RPGOGP:ButtonHandle();
+		end
+};
+RPGOGP.chatfunc={
+	GUILD_INFO_TEMPLATE =
+		function(msgstruct)
+			RPGOGP.db["Created"]=format("%04d-%02d-%02d",msgstruct[3],msgstruct[1],msgstruct[2]);
+			RPGOGP.db["NumAccounts"]=msgstruct[5];
+		end,
+	ERR_GUILD_REMOVE_SS =
+		function(msgstruct)
+			RPGOGP:GuildHistory(msgstruct[1],"REMOVE","by:"..msgstruct[2]);
+		end,
+	ERR_GUILD_PROMOTE_SSS =
+		function(msgstruct)
+			RPGOGP:GuildHistory(msgstruct[2],"PROMOTE","by:"..msgstruct[1]..";to:"..msgstruct[3]);
+		end,
+	ERR_GUILD_DEMOTE_SSS =
+		function(msgstruct)
+			RPGOGP:GuildHistory(msgstruct[2],"DEMOTE","by:"..msgstruct[1]..";to:"..msgstruct[3]);
+		end,
+	ERR_GUILD_INVITE_S =
+		function(msgstruct)
+			RPGOGP:State("_invite",msgstruct[1]);
+		end,
+	ERR_GUILD_JOIN_S =
+		function(msgstruct)
+			local msg;
+			if(RPGOGP:State("_invite")==msgstruct[1]) then
+				msg = "by:"..RPGOGP:State("_player");
+				RPGOGP:State("_invite",nil);
+			end
+			RPGOGP:GuildHistory(msgstruct[1],"JOIN",msg);
+		end,
+	ERR_GUILD_LEAVE_S =
+		function(msgstruct)
+			RPGOGP:GuildHistory(msgstruct[1],"LEAVE");
+		end,
+};
+
+--[EventHandler]
+function RPGOGP:EventHandler(event,arg1,arg2)
+	if(not event) then return end
+	if(not cfg or not cfg.enabled) then return; end
+
+	if(rpgoDebugArg) then
+		rpgoDebugArg(self.ABBR,event,arg1,arg2);
+	end
+
+	--debugprofilestart();
+	--local mem=gcinfo();
+	local retVal;
+
+	retVal = rpgo.qProcess(RPGOGP.queue,event);
+		if(retVal~=nil) then return retVal; end
+
+	if(self.event1[event]) then
+		retVal = self.event1[event](arg1,arg2);
+		if(retVal~=nil) then return retVal; end
+	end
+
+	if(self:LiteScan(event)) then return; end
+	if(not self:State("_lock")) then
+		if(self.event2[event]) then
+			self:State("_lock",true);
+			self.event2[event](arg1,arg2);
+			self:State("_lock",nil);
+		end
+	end
+	--self:PrintDebug("time",debugprofilestop().."ms",gcinfo()-mem.."kb");
+end
+--[InitPrefs]
+function RPGOGP:InitPref()
+	if(not cfg) then return; end
+	if(not rpgoGPpref) then rpgoGPpref={}; end
+	cfg = rpgoGPpref;
+	self:PrefTidy();
+	self:PrefInit();
+	self:ButtonHandle();
+
+	if( cfg.verbose ) then
+		self:PrintTitle("loaded.",true,true);
+	end
+	self:PrintDebug("running in DEBUG MODE");
+end
+--[InitState]
+function RPGOGP:InitState()
+	self.state={
+		_loaded=nil,_lock=nil,_time=0,
+		_server=GetRealmName(),
+		_player=UnitName("player"),
+		_guild=GetGuildInfo("player"),
+		_officer=CanViewOfficerNote(),
+		_guilded=IsInGuild(),
+		_guildInfo=nil,
+	};
+	self.queue={};
+end
+
+--[CheckGuildInfo]
+function RPGOGP:CheckGuildInfo()
+	if(arg1=="player" or arg1==nil ) then
+		if( IsInGuild() ) then
+			local guild = GetGuildInfo("player");
+			if( guild ) then
+				if( self.state["_guild"]~=guild ) then
+					self:InitState();
+				end
+				if( not self:State("_loaded") ) then
+					self:InitProfile();
+				end
+			else
+				self:State("_loaded",false);
+			end
+		else
+			self:State("_loaded",false);
+		end
+	end
+	self.frame:UnregisterEvent("PLAYER_ENTERING_WORLD");
+	return true;
+end
+
+--[Toggle]
+function RPGOGP:Toggle(val)
+	if(cfg.enabled~=val) then
+		self:PrefToggle("enabled",val);
+		self:RegisterEvents();
+		if(val) then
+			self:InitState();
+			if(not self:State("_loaded")) then
+				self:InitProfile();
+			end
+		else
+			self.state=nil;
+		end
+	else
+		self:PrefToggle("enabled",val);
+	end
+end
+--[ButtonHandle]
+function RPGOGP:ButtonHandle()
+	if(cfg.button) then
+		rpgoGPUISaveButton = CreateFrame("Button", "rpgoGPUISaveButton", GuildFrame, "MagicButtonTemplate");
+		rpgoGPUISaveButton:SetPoint("TOP", GuildFrame, "TOP", 0, 0);
+		rpgoGPUISaveButton:SetHeight(23);
+		rpgoGPUISaveButton:SetWidth(55);
+		rpgoGPUISaveButton:SetToplevel(true);
+		rpgoGPUISaveButton:SetText(RPGOGP_SAVE_TEXT);
+		rpgoGPUISaveButton:Show();
+		rpgoGPUISaveButton:SetScript("OnClick", function() return self:EventHandler('RPGOGP_EXPORT') end );
+		rpgoGPUISaveButton:SetScript("OnEnter", function() return rpgo.SetTooltip(RPGOGP_SAVE_TOOLTIP) end );
+		rpgoGPUISaveButton:SetScript("OnLeave", function() return GameTooltip:Hide() end );
+	elseif(rpgoGPUISaveButton) then
+		rpgoGPUISaveButton:Hide();
+		rpgoGPUISaveButton=nil;
+	end
+end
+
+--[InitProfile]
+function RPGOGP:InitProfile()
+	if( not self.state["_guild"] ) then
+		return false;
+	end
+	if( not myProfile ) then
+		myProfile={}; end
+	if( not myProfile[self.state["_server"]] ) then
+		myProfile[self.state["_server"]]={}; end
+	if( not myProfile[self.state["_server"]]["Guild"] ) then
+		myProfile[self.state["_server"]]["Guild"]={}; end
+	if( not myProfile[self.state["_server"]]["Guild"][self.state["_guild"]] ) then
+		myProfile[self.state["_server"]]["Guild"][self.state["_guild"]]={}; end
+	self.db = myProfile[self.state["_server"]]["Guild"][self.state["_guild"]];
+
+	if( not self.chatpattern ) then
+		self.chatpattern={};
+		local chatpatt={};
+		if(cfg.history) then
+			chatpatt={
+				"ERR_PLAYER_DIED_S",
+				"ERR_RAID_MEMBER_ADDED_S",
+				"ERR_BG_PLAYER_JOINED_SS",
+				"ERR_FRIEND_OFFLINE_S",
+				"ERR_FRIEND_ONLINE_SS",
+				"ERR_GUILD_REMOVE_SS",
+				"ERR_GUILD_PROMOTE_SSS",
+				"ERR_GUILD_DEMOTE_SSS",
+				"ERR_GUILD_INVITE_S",
+				"ERR_GUILD_JOIN_S",
+				"ERR_GUILD_LEAVE_S",
+			};
+		end
+		table.insert(chatpatt,"GUILD_NAME_TEMPLATE");
+		table.insert(chatpatt,"GUILD_INFO_TEMPLATE");
+		local str,n,ord;
+		for _,chatpatt in pairs(chatpatt) do
+			str,n,ord=rpgo.ConvertString(getglobal(chatpatt),true);
+			table.insert(self.chatpattern,{key=chatpatt,str=str,n=n,ord=ord});
+		end
+		rpgoGPframe:RegisterEvent("CHAT_MSG_SYSTEM");
+	end
+	if( self.db ) then
+		self.db["GPversion"]	= self.VERSION;
+		self.db["GPprovider"]	= self.PROVIDER;
+		self.db["DBversion"]	= self.PROFILEDB;
+		self.db["Name"]			= self.state["_guild"];
+		self.db["Server"]		= self.state["_server"];
+		self.db["Locale"]		= GetLocale();
+		self:UpdateDate();
+		self:State("_loaded",true);
+		self.frame:RegisterEvent("GUILD_MOTD");
+		self.frame:RegisterEvent("GUILD_TABARD");
+		self.frame:RegisterEvent("GUILD_ROSTER_UPDATE");
+		self.frame:RegisterEvent("GUILD_EVENT_LOG_UPDATE");
+	end
+	return self:State("_loaded");
+end
+--[ForceExport]
+function RPGOGP:ForceExport()
+	--local state=self.state;
+	self:InitState();
+		self.state["_guildInfo"]=self:State("_guildInfo")
+		--self.state["_guildInfo"]=state["_guildInfo"];
+	self:InitProfile();
+	self:UpdateProfile();
+	self:Show();
+end
+--[UpdateProfile]
+function RPGOGP:UpdateProfile()
+	--if(not self:State("_lock")) then
+	--	self:State("_lock",true);
+		self:GetGuildInfo();
+	--	self:State("_lock",nil);
+	--	return true
+	--end
+	return nil
+end
+--[ChatCommand]
+function RPGOGP:ChatCommand(argline)
+	local argv=rpgo.Str2Ary(argline);
+	if(argv and argv[1]) then
+		local argcase = string.lower(argv[1]);
+		table.remove(argv,1);
+		if(self.command[argcase]) then
+			return self.command[argcase](argv);
+		elseif(cfg.argcase~=nil) then
+			return self:PrefToggle(argcase,argv[1]);
+		end
+	end
+	self:PrintUsage();
+	self:PrefToggle("enabled");
+end
+--[Show]
+function RPGOGP:Show()
+	if( cfg.enabled ) then
+		if( self:State("_loaded") ) then
+			if( self:State("_guilded") ) then
+				local msg="Profile for: <" .. self.state["_guild"] .. "> @" .. self.state["_server"];
+				self:PrintTitle(msg);
+				if( self:State("_guildNum") ) then
+					rpgo.PrintMsg("    Members: " .. self:State("_guildNum"));
+				else
+					rpgo.PrintMsg("    Members: not scanned");
+				end
+			else
+				self:PrintTitle("you are not in a guild");
+			end
+		else
+			self:PrintTitle(rpgo.StringColorize(rpgo.colorRed,"no guild info scanned this session"));
+			rpgo.PrintMsg("    to scan open your guild roster ('O'->'Guild')");
+			rpgo.PrintMsg("    or force the export with '/gp export'");
+		end
+	else
+		self:PrefToggle("enabled");
+	end
+end
+
+--[[########################################################
+--## rpgoGP Extract functions
+--######################################################--]]
+function RPGOGP:GetGuildInfo()
+	if( not IsInGuild() ) then
+		self:State("_guilded",false);
+		return;
+	end
+	local numGuildMembers, onlineMembers = GetNumGuildMembers();
+	local time=time();
+	rpgo.qInsert(RPGOGP.queue, {"GUILD_EVENT_LOG_UPDATE",RPGOGP.ScanGuildEventLog} );
+	QueryGuildEventLog();
+	if( (time-self:State("_time") >= cfg.rescan*60) or (self:State("_guildNum")~=numGuildMembers) ) then
+		self:State("_guilded",true);
+		self.db["Info"]		= GetGuildInfoText();
+		self.db["FactionEn"],self.db["Faction"] = UnitFactionGroup("player");
+		if(numGuildMembers~=0) then
+			self.db["NumMembers"]=numGuildMembers;
+			self:ScanGuildMembers(numGuildMembers);
+		end
+		self:ScanGuildMOTD();
+		self:ScanGuildTabard()
+		self:ScanGuildControl();
+		self.db["ScanInfo"] = {
+			Character = self:State("_player"),
+			IsGuildLeader = (IsGuildLeader()==1 or false),
+			HasOfficerNote = (self:State("_officer")==1 or false)
+			};
+		self:UpdateDate();
+		self:State("_time",time);
+	end
+end
+function RPGOGP:ScanGuildMOTD()
+	self.db["Motd"] = GetGuildRosterMOTD();
+end
+
+function RPGOGP:ScanGuildTabard()
+ local tabardBackgroundUpper, tabardBackgroundLower, tabardEmblemUpper, tabardEmblemLower, tabardBorderUpper, tabardBorderLower = GetGuildTabardFileNames();
+ local bkgR, bkgG, bkgB, borderR, borderG, borderB, emblemR, emblemG, emblemB, emblemFilename = GetGuildLogoInfo();
+ if ( not tabardEmblemUpper ) then
+		tabardBackgroundUpper = "Textures\\GuildEmblems\\Background_49_TU_U";
+		tabardBackgroundLower = "Textures\\GuildEmblems\\Background_49_TL_U";
+	end
+ self.db["Tabard"] = {
+ 	BackgroundColor = strjoin(":",bkgR, bkgG, bkgB),
+ 	BorderColor = strjoin(":",borderR, borderG, borderB),
+ 	EmblemColor = strjoin(":",emblemR, emblemG, emblemB),
+ 	EmblemFile = emblemFilename,
+ 	BackgroundUpper = tabardBackgroundUpper,
+ 	BackgroundLower = tabardBackgroundLower,
+ 	EmblemUpper = tabardEmblemUpper,
+ 	EmblemLower = tabardEmblemLower,
+ 	BorderUpper = tabardBorderUpper,
+ 	BorderLower = tabardBorderLower
+ 	};
+ end
+function RPGOGP:ScanGuildMembers(numMembers)
+	self:State("_officer",CanViewOfficerNote());
+	if(numMembers > 0 and (self:State("_guildNum")~=numMembers)) then
+		local showOfflineTemp=GetGuildRosterShowOffline();
+		SetGuildRosterShowOffline(true);
+		local cnt = 0;
+		local guildMemberTemp={};
+		-- try to order mains before alter at lua but don't works :(
+--		SortGuildRoster("name");-- order by name
+--		local name_first=GetGuildRosterInfo(1);
+--		local name_last=GetGuildRosterInfo(numMembers);
+--		if (name_first > name_last ) then SortGuildRoster("name"); end -- sure is A-Z (there aren't getorder)
+--		SortGuildRoster( "rank" ); -- order by rank
+--		local _,_, rank_first = GetGuildRosterInfo(1);
+--		local _,_, rank_last = GetGuildRosterInfo(numMembers);
+--		if (rank_first > rank_last ) then SortGuildRoster("rank"); end -- sure is GM-OFICER-RAIDER-ALTER better for relations MAIN/ALT (there aren't getorder)
+		--UnitIsInMyGuild("name");
+		for idx=1,numMembers do
+			local name,rank,rankIndex,level,class,zone,note,officernote,online,status,classEn,achievementPoints,achievementRank,isMobile=GetGuildRosterInfo(idx);
+			--local name,rank,index,level,class,zone,note,officernote,online,status,classEn=GetGuildRosterInfo(idx);
+			local lastonline;
+			if(name~=nil)then
+				if(self:State("_officer")) then
+				elseif((guildMemberTemp) and guildMemberTemp[name]) then
+					officernote = guildMemberTemp[name]["OfficerNote"];
+				end
+-- ################### now hardcode but can be used rankindex and setup in options!
+				if (rank=="Alter" or rank=="Alter de Ofi") then
+					local correct = string.find(note,"ALT-");
+					local main = string.sub(note, 5);
+					if (correct == nil) then
+						addon:Print(string.format(L["Revise public note for %s (%s) = '%s' need start with 'ALT-'."],name,rank,note));
+					elseif ( not UnitIsInMyGuild(main)) then
+						addon:Print(string.format(L["Revise public note for %s (%s) = '%s' because %s its not in the guild."],name,rank,note,main));
+					end
+				end
+-- ##################				
+				if(not cfg.title) then
+					rank = nil; end
+				if(cfg.compact) then
+					if(status=="") then status = nil; end
+					if(note=="") then note = nil; end
+					if(officernote=="") then officernote = nil; end
+				end
+				if(not online) then
+					lastonline = strjoin(":",GetGuildRosterLastOnline(idx));
+				end
+				guildMemberTemp[name] = {
+					Name	= name,
+					Rank	= rankIndex,
+					Title	= rank,
+					Level	= level,
+					Class	= class,
+					ClassId	= rpgo.UnitClassID(classEn),
+					Zone	  = zone,
+					Status	= status,
+					Note	  = note,
+					OfficerNote= officernote,
+					Online	   = online,
+					LastOnline = lastonline,
+					AchPoints = achievementPoints,
+					AchRank = achievementRank,
+					Mobile = isMobile,
+				};
+				cnt=cnt+1;
+			end
+		end
+		SetGuildRosterShowOffline(showOfflineTemp);
+		if(numMembers==table.count(guildMemberTemp)) then
+			self:State("_guildNum",cnt);
+			if(self:State("_guildInfo")~=numMembers) then
+				GuildInfo();
+				self.state["_guildInfo"]=numMembers;
+			end
+			self.db["Members"]=guildMemberTemp;
+			self.db["timestamp"]["Members"]=time();
+		end
+	end
+end
+
+function RPGOGP.ScanGuildBankQueue()
+	local queue = RPGOGP.queue
+	if(not queue or table.getn(queue) == 0) then return end;
+	for idx,tab in pairs( queue ) do
+		if( tab[1] == "GUILDBANKBAGSLOTS_CHANGED" ) then
+			QueryGuildBankTab(tab[3]);
+		elseif( tab[1] == "GUILDBANKLOG_UPDATE" ) then
+			QueryGuildBankLog(tab[3]);
+		end
+	end
+end
+
+function RPGOGP:ScanGuildBank()
+	if(not RPGOGP.db["Vault"]) then
+		RPGOGP.db["Vault"]={};
+	end
+	if(not RPGOGP.db["Vault"]["Tabs"]) then
+		RPGOGP.db["Vault"]["Tabs"]={};
+	end
+	if(not RPGOGP.db["Vault"]["Log"]) then
+		RPGOGP.db["Vault"]["Log"]={};
+	end
+
+	local isViewable
+	for tab=1, MAX_GUILDBANK_TABS, 1 do
+		_,_,isViewable = GetGuildBankTabInfo(tab);
+		if( isViewable ) then
+			rpgo.qInsert(RPGOGP.queue, {"GUILDBANKBAGSLOTS_CHANGED",RPGOGP.ScanGuildBankTab,tab} );
+			QueryGuildBankTab(tab);
+		else
+			RPGOGP.db["Vault"]["Tabs"]["Tab"..tab]=nil;
+			RPGOGP.db["Vault"]["Log"]["Tab"..tab]=nil;
+		end
+	end
+	RPGOGP:ScanGuildBankMoney()
+end
+
+function RPGOGP.ScanGuildBankTab(tab)
+	if(not RPGOGP.db["Vault"]["Tabs"]["Tab"..tab]) then
+		RPGOGP.db["Vault"]["Tabs"]["Tab"..tab]={};
+	end
+	if(not RPGOGP.db["Vault"]["Tabs"]["Tab"..tab]["Contents"]) then
+		RPGOGP.db["Vault"]["Tabs"]["Tab"..tab]["Contents"]={};
+	end
+
+	local db = RPGOGP.db["Vault"]["Tabs"]["Tab"..tab];
+	local tabName,tabIcon  = GetGuildBankTabInfo(tab);
+
+	db["Name"] = tabName;
+	db["Icon"] = rpgo.scanIcon(tabIcon);
+	local itemLink;
+	local itemIcon, itemCount;
+
+	for idx=1, MAX_GUILDBANK_SLOTS_PER_TAB do
+		itemIcon, itemCount = GetGuildBankItemInfo(tab,idx);
+		RPGOCP.tooltip:SetGuildBankItem(tab,idx);
+		_, itemLink = RPGOCP.tooltip:GetItem()
+		db["Contents"][idx] = RPGOCP:ScanItemInfo(itemLink,itemIcon,itemCount);
+	end
+	--rpgo.qInsert(RPGOGP.queue, {"GUILDBANKLOG_UPDATE",RPGOGP.ScanGuildBankTabLog,tab} );
+	--QueryGuildBankLog(tab);
+end
+
+function RPGOGP.ScanGuildBankTabLog(tab)
+	if(not RPGOGP.db["Vault"]["Log"]["Tab"..tab]) then
+		RPGOGP.db["Vault"]["Log"]["Tab"..tab]={};
+	end
+
+	local db = RPGOGP.db["Vault"]["Log"]["Tab"..tab];
+	local type, name, itemLink, count, tab1, tab2, year, month, day, hour;
+	local itemID
+	local numTransactions = GetNumGuildBankTransactions(tab);
+
+RPGOGP:PrintDebug("TabLog",numTransactions,table.getn(db));
+	if(numTransactions >= table.getn(db)) then
+		for idx=1, numTransactions, 1 do
+			type, name, itemLink, count, tab1, tab2, year, month, day, hour = GetGuildBankTransaction(tab,idx);
+			_,_,itemID=rpgo.GetItemInfo(itemLink);
+			db[idx] = {
+				Type	= type,
+				Name	= name or UNKNOWN,
+				Tab1	= tab1,
+				Tab2	= tab2,
+				Item	= itemID,
+				Count	= count,
+				Time	= strjoin(":",year, month, day, hour)
+			};
+		end
+	--else
+		--rpgo.qInsert(RPGOGP.queue, {"GUILDBANKLOG_UPDATE",RPGOGP.ScanGuildBankTabLog,tab} );
+		--QueryGuildBankLog(tab);
+	end
+end
+
+function RPGOGP:ScanGuildBankMoney()
+	if(not self.db["Vault"]) then
+		self.db["Vault"]={};
+	end
+	self.db["Vault"]["Money"] = rpgo.Arg2Tab("Gold","Silver","Copper",rpgo.parseMoney(GetGuildBankMoney()));
+	--rpgo.qInsert(RPGOGP.queue, {"GUILDBANKLOG_UPDATE",RPGOGP.ScanGuildBankMoneyLog,MAX_GUILDBANK_TABS+1} );
+	--QueryGuildBankLog(MAX_GUILDBANK_TABS+1);
+end
+
+function RPGOGP.ScanGuildBankMoneyLog()
+	if(not RPGOGP.db["Vault"]) then
+		RPGOGP.db["Vault"]={};
+	end
+	if(not RPGOGP.db["Vault"]["Log"]) then
+		RPGOGP.db["Vault"]["Log"]={};
+	end
+	if(not RPGOGP.db["Vault"]["Log"]["Money"]) then
+		RPGOGP.db["Vault"]["Log"]["Money"]={};
+	end
+	local db = RPGOGP.db["Vault"]["Log"]["Money"];
+	local type, name, amount, year, month, day, hour;
+	local numTransactions = GetNumGuildBankMoneyTransactions();
+
+RPGOGP:PrintDebug("MoneyLog",numTransactions,table.getn(db));
+	if(numTransactions >= table.getn(db)) then
+		for idx=1, numTransactions, 1 do
+			type, name, amount, year, month, day, hour = GetGuildBankMoneyTransaction(idx);
+			db[idx] = {
+				Type	= type,
+				Name	= name or UNKNOWN,
+				Amount	= amount,
+				Time	= strjoin(":",year, month, day, hour)
+			};
+		end
+	else
+		--rpgo.qInsert(RPGOGP.queue, {"GUILDBANKLOG_UPDATE",RPGOGP.ScanGuildBankMoneyLog,MAX_GUILDBANK_TABS+1} );
+		--QueryGuildBankLog(MAX_GUILDBANK_TABS+1);
+	end
+end
+
+function RPGOGP:ScanGuildControl()
+	self.db["Control"]={};
+--	for idx=1,MAX_GUILDCONTROL_OPTIONS do
+--	MAX_GUILDCONTROL_OPTIONS variable is wrong
+	for idx=1,GuildControlGetRankFlagsNum(GuildControlGetRankFlags()) do
+		self.db["Control"][idx]=getglobal("GUILDCONTROL_OPTION"..idx);
+	end
+	self.db["Ranks"]={};
+	for idx=1,GuildControlGetNumRanks() do
+		GuildControlSetRank(idx);
+		self.db["Ranks"][idx-1]={
+			Title=GuildControlGetRankName(idx),
+			Control=self:GuildControlGetRankFlagsStr(GuildControlGetRankFlags()),
+			Withdraw=GetGuildBankWithdrawGoldLimit(),
+		};
+		local numTabs = GetNumGuildBankTabs();
+		for i=1, MAX_GUILDBANK_TABS do
+			if ( i <= numTabs ) then
+				local viewTab, canDeposit, numWithdrawals = GetGuildBankTabPermissions(i);
+				viewTab = viewTab or 0;
+				canDeposit = canDeposit or 0;
+				numWithdrawals = numWithdrawals or 0;
+				self.db["Ranks"][idx-1]["Tab"..i]=strjoin(":",viewTab, canDeposit, numWithdrawals);
+			else
+				self.db["Ranks"][idx-1]["Tab"..i]=nil;
+			end
+		end
+	end
+end
+
+function GuildControlGetRankFlagsNum(...)
+	return select("#",...);
+end
+function RPGOGP:GuildControlGetRankFlagsStr(...)
+	local flags={};
+	for i=1,select("#",...) do
+		local v=select(i,...);
+		v = v or 0;
+		table.insert(flags,v);
+	end
+	return(table.concat(flags,":"));
+end
+function RPGOGP:GuildVaultFlags(...)
+	local str = "";
+	for i=1, MAX_GUILDBANK_TABS do
+		str = str ..strjoin(":",GetGuildBankTabPermissions(i))
+	end
+end
+function RPGOGP.ScanGuildEventLog()
+	if(not RPGOGP.db["EventLog"]) then
+		RPGOGP.db["EventLog"]={};
+	end
+	local db = RPGOGP.db["EventLog"];
+	local type, player1, player2, rank, year, month, day, hour;
+	local numEvents = GetNumGuildEvents();
+	local time=time();
+
+RPGOGP:PrintDebug("EventLog",numEvents,table.getn(db));
+	if(numEvents >= table.getn(db)) then
+		for idx=1, numEvents, 1 do
+			type, player1, player2, rank, year, month, day, hour = GetGuildEventInfo(idx);
+			if ( not player1 ) then
+				player1 = UNKNOWN;
+			end
+			if ( not player2 ) then
+				player2 = UNKNOWN;
+			end
+			db[idx] = {
+				Type	= type,
+				Player1	= player1,
+				Player2	= player2,
+				Rank	= rank,
+				Time	= time,
+				LogTime	= strjoin(":",year, month, day, hour),
+			};
+		end
+	else
+		rpgo.qInsert(RPGOGP.queue, {"GUILD_EVENT_LOG_UPDATE",RPGOGP.ScanGuildEventLog} );
+		QueryGuildEventLog();
+	end
+end
+
+function RPGOGP:ScanSystemMsg(msg)
+	if(msg) then
+		for i in pairs(self.chatpattern) do
+			match = rpgo.ParseString(msg,self.chatpattern[i]);
+			if(table.count(match)==self.chatpattern[i].n) then
+				if(self.chatfunc[self.chatpattern[i].key]) then
+					self.chatfunc[self.chatpattern[i].key](match);
+				end
+				break;
+			end
+		end
+	end
+end
+function RPGOGP:GuildHistory(member,action,info)
+	if(not self.db["History"]) then
+		self.db["History"]={};
+	end
+	table.insert(self.db["History"],{
+			member=member,
+			action=action,
+			info=info,
+			time=time(),
+			}
+		);
+	self.state["_time"] = 0;
+end
+
+function addon:Print(msg)
+	DEFAULT_CHAT_FRAME:AddMessage(string.format("|cff33ff99GuildProfiler|r: %s", msg))
+end
+
+function addon:Echo(msg)
+	DEFAULT_CHAT_FRAME:AddMessage(msg)
+end
+
+if( IsAddOnLoaded("TestCode") ) then
+	addon.L = setmetatable(addon.L, {
+		__index = function(tbl, value)
+			rawset(tbl, value, value)
+			return value
+		end,
+	})
+	
+	_G["GuildProfiler"] = addon
+end
+
+-- Removed Guild profesions to much data xD
+
+--local numTradeSkill = GetNumGuildTradeSkill();
+--local skillID, isCollapsed, iconTexture, headerName, numOnline, numPlayers, playerName, class, online, zone, skill, classFileName = GetGuildTradeSkillInfo(index);
+
+--name, online = GetGuildRecipeMember(index);
+--GetGuildMemberRecipes(playerName, skillID);
+--local skillLineID, recipeID, numMembers = GetGuildRecipeInfoPostQuery();
+
+--local name, spellID, iconTexture, level = GetGuildPerkInfo(index);
+
+--prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions();
+--name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine = GetProfessionInfo(index)
+
+
+
+RPGOGP:Init();

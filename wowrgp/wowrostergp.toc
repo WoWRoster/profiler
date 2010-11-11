@@ -1,0 +1,16 @@
+## Interface: 40000
+## Title: WOW-R-GP
+## Notes: Export Guild Roster for use out-of-game
+## Version: 1.0
+## Author: Ulminia
+## RequiredDeps: wowroster
+embeds.xml
+
+localization.enUS.lua
+localization.deDE.lua
+localization.frFR.lua
+localization.esES.lua
+localization.ruRU.lua
+localization.zhTW.lua
+
+Core.lua
