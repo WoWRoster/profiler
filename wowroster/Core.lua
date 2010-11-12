@@ -422,6 +422,8 @@ function wowroster:makeconfig()
 					type = "toggle",name = "Guild Craft",desc = "scan the professions list for storage on the site (no recipes stored)",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
 					get = function(info) return wowrpref["guild"][info[#info]] end,order = 35,
 				},
+			},
+		},
 				
 	},
 	}
@@ -687,7 +689,7 @@ function wowroster:ScanCurrency(force)
 						Name	= name,
 						Watched	= isWatched,
 						Count	= count,
-`						Icon	= wowroster.scanIcon(extraCurrencyType),
+						Icon	= wowroster.scanIcon(extraCurrencyType),
 						Tooltip	= tooltip,
 					};
 				end
