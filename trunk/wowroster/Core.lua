@@ -190,7 +190,7 @@ function wowroster:Show()
 					msg=msg..wowroster.StringColorize(rpgo.colorRed," not scanned")..".  - open each profession to scan";
 				else
 					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item..":"..stat["Professions"][item].." errors("..stat["Professions"][item]["errors"]..")";
+						msg=msg .. " " .. item..":"..stat["Professions"][item]["ct"].." errors("..stat["Professions"][item]["errors"]..")";
 					end
 				end
 			wowroster:Print(msg);
@@ -1444,8 +1444,9 @@ function wowroster:TRADE_SKILL_SHOW()
 	local skillLineName,skillLineRank,skillLineMaxRank=GetTradeSkillLine();
 	local skills = wowroster.db["Professions"];
 	local cnt = 0;
-	stat["Professions"][skillLineName] = 0;
+	stat["Professions"][skillLineName] = {};
 	stat["Professions"][skillLineName]["errors"] = 0;
+	stat["Professions"][skillLineName]["ct"] = 0;
 	if(not skillLineName or skillLineName=="" or skillLineName==UNKNOWN) then
 		return;
 	end
@@ -1516,7 +1517,7 @@ function wowroster:TRADE_SKILL_SHOW()
 				end
 			end
 		end	
-		stat["Professions"][skillLineName] = cnt;
+		stat["Professions"][skillLineName]["ct"] = cnt;
 		wowroster.db["Professions"] = skills				
 end
 
