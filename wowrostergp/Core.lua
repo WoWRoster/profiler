@@ -330,7 +330,7 @@ function wowrostergp.ScanGuildBankQueue()
 end
 
 function wowrostergp:ScanGuildBank()
-	if(not self.sv["Vault"]) then
+	if(not wowrostergp.sv["Vault"]) then
 		wowrostergp.sv["Vault"]={};
 	end
 	if(not wowrostergp.sv["Vault"]["Tabs"]) then
@@ -343,12 +343,13 @@ function wowrostergp:ScanGuildBank()
 	numTabs = GetNumGuildBankTabs()
 	local isViewable
 	for tab=1, numTabs do
+		if ( stat["Vaultavl"]) then
+			QueryGuildBankTab(tab);
+		end
 		_,_,isViewable = GetGuildBankTabInfo(tab);
 		if( isViewable ) then
 			wowrostergp.ScanGuildBankTab(tab);
-			if ( stat["Vaultavl"]) then
-				QueryGuildBankTab(tab);
-			end
+
 		else
 			wowrostergp.sv["Vault"]["Tabs"]["Tab"..tab]=nil;
 			wowrostergp.sv["Vault"]["Log"]["Tab"..tab]=nil;
@@ -370,7 +371,7 @@ function wowrostergp.ScanGuildBankTab(tab)
 
 	local gb = wowrostergp.sv["Vault"]["Tabs"]["Tab"..tab];
 	local tabName,tabIcon  = GetGuildBankTabInfo(tab);
-
+	
 	gb["Name"] = tabName;
 	gb["Icon"] = wowroster.scanIcon(tabIcon);
 	local itemLink;
@@ -433,12 +434,10 @@ function wowrostergp.ScanGuildBankTabLog(tab)
 	if(not wowrostergp.sv["Vault"]["Log"]["Tab"..tab]) then
 		wowrostergp.sv["Vault"]["Log"]["Tab"..tab]={};
 	end
-
 	local db = wowrostergp.sv["Vault"]["Log"]["Tab"..tab];
 	local type, name, itemLink, count, tab1, tab2, year, month, day, hour;
 	local itemID
 	local numTransactions = GetNumGuildBankTransactions(tab);
-	stat["Vault"]["Log"]["Tab"..tab]={trx=numTransactions};
 
 	if(numTransactions >= table.getn(db)) then
 		for idx=1, numTransactions, 1 do
@@ -484,7 +483,6 @@ function wowrostergp.ScanGuildBankMoneyLog()
 	local db = wowrostergp.sv["Vault"]["Log"]["Money"];
 	local type, name, amount, year, month, day, hour;
 	local numTransactions = GetNumGuildBankMoneyTransactions();
-	stat["Vault"]["Log"]["Money"]={trx=numTransactions};
 
 	if(numTransactions >= table.getn(db)) then
 		for idx=1, numTransactions, 1 do
