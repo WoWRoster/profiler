@@ -1,7 +1,7 @@
 ## Interface: 40000
-## Title: WOW-R-GP
-## Notes: Export Guild Roster for use out-of-game
-## Version: 1.0
+## Title: WoWRoster Guild Profiler
+## Notes: Guild data gathering utility for use with the WoWRoster.net profiler or for your own uses.
+## Version: 0.1
 ## Author: Ulminia
 ## RequiredDeps: wowroster
 embeds.xml
