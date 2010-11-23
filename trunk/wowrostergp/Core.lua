@@ -11,18 +11,18 @@ if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
 
 local stat = {
-		_server=GetRealmName(),
-		_player=UnitName("player"),
-		_guild=GetGuildInfo("player"),
-		_officer=CanViewOfficerNote(),
-		_guilded=IsInGuild(),
-		_guildInfo=nil,
-		_loaded,
-		_time,
-		_guildNum,
-		Vault={},
-		Vaultavl=true,
-	};
+	_server=GetRealmName(),
+	_player=UnitName("player"),
+	_guild=GetGuildInfo("player"),
+	_officer=CanViewOfficerNote(),
+	_guilded=IsInGuild(),
+	_guildInfo=nil,
+	_loaded,
+	_time,
+	_guildNum,
+	Vault={},
+	Vaultavl=true,
+};
 
 local function findPanel(name, parent)
 	for i, button in next, InterfaceOptionsFrameAddOns.buttons do
@@ -35,24 +35,20 @@ local function findPanel(name, parent)
 end
 
 function wowrostergp:OnEnable()
-    
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	self:RegisterEvent("ADDON_LOADED")
 	wowrostergp:Print("WoWR-GP Enabled!");
-
 end
 
 function wowrostergp:ADDON_LOADED(arg1,arg2)
-
 	if arg2 == "Blizzard_GuildUI" then
-	wowrostergp:ButtonHandler( )
-    end
+		wowrostergp:ButtonHandler( )
+	end
 end
 
 function wowrostergp:ButtonHandler( )
-self.buttons = {}	
-
+	self.buttons = {}
 	local button = CreateFrame("Button", "GuildProfilerbtm", GuildFrame, "UIPanelButtonTemplate");
 	button.tooltip = "export guild data"--L["Click to export your Guild Profile!"]
 	button.startTooltip = button.tooltip
@@ -63,24 +59,19 @@ self.buttons = {}
 	button:SetScript("OnEnter", showTooltip)
 	button:SetScript("OnLeave", hideTooltip)
 	button:SetScript("OnClick", function(self)wowrostergp:gpexport()end )
-	self.buttons.save = button	
-	
+	self.buttons.save = button
 end
+
 function wowrostergp:OnDisable()
 	LibStub("AceDB-3.0"):New("cpProfile",self.sv)
 end
 
-
 function wowrostergp:OnInitialize()
-
 	wowrostergp:InitState()
-
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
-
 	wowrostergp:InitProfile()
-
 end
 
 function wowrostergp:InitState()
@@ -97,7 +88,6 @@ function wowrostergp:InitState()
 		Vault={},
 		Vaultavl=false,
 	};
-
 end
 
 function wowrostergp:gpexport()
@@ -105,23 +95,22 @@ function wowrostergp:gpexport()
 	if(wowrpref["guild"]["trades"]) then
 		wowrostergp:ScanProfessions()
 	end
-	
+
 	msg = "Vault:";
-				tsort={};
-				table.foreach(stat["Vault"], function(k,v) table.insert(tsort,k) end );
-				table.sort(tsort);
-				if(table.getn(tsort)==0) then
-					msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your Guild Vault to scan";
-				else
-					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item.."-"..stat["Vault"][item]["inv"].."/"..stat["Vault"][item]["slot"];
-					end
-				end
-			wowrostergp:Print(msg);
+	tsort={};
+	table.foreach(stat["Vault"], function(k,v) table.insert(tsort,k) end );
+		table.sort(tsort);
+		if(table.getn(tsort)==0) then
+			msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your Guild Vault to scan";
+		else
+		for _,item in pairs(tsort) do
+			msg=msg .. " " .. item.."-"..stat["Vault"][item]["inv"].."/"..stat["Vault"][item]["slot"];
+		end
+	end
+
+	wowrostergp:Print(msg);
 	msg = "Members: "..stat["_guildNum"].." ";
-			wowrostergp:Print(msg);
-		
-			
+	wowrostergp:Print(msg);
 end
 
 function wowrostergp:InitProfile()
@@ -153,10 +142,12 @@ function wowrostergp:InitProfile()
 	end
 	return stat["_loaded"];
 end
+
 function wowrostergp:UpdateDate()
 	if(not wowrostergp.sv) then return; end;
+
 	local struct=wowrostergp.sv;
-	if ( not struct["timestamp"] ) then struct["timestamp"]={}; end
+	if ( not struct["timestamp"] ) then struct["timestamp"]={}; end;
 	local timestamp = time();
 	local currHour,currMinute=GetGameTime();
 	struct["timestamp"]["init"]={};
@@ -178,11 +169,9 @@ wowrostergp.GetSystem = function()
 end
 
 function wowrostergp:GUILDBANKFRAME_OPENED()
-
 	if(wowrpref["guild"]["vault"]) then
 		wowrostergp:ScanGuildBank();
 	end
-	
 end
 
 function wowrostergp:GetGuildInfo()
@@ -194,22 +183,22 @@ function wowrostergp:GetGuildInfo()
 
 	QueryGuildEventLog();
 
-		stat["_guilded"]=true;
-		wowrostergp.sv["Info"]		= GetGuildInfoText();
-		wowrostergp.sv["FactionEn"],wowrostergp.sv["Faction"] = UnitFactionGroup("player");
-		if(numGuildMembers~=0) then
-			wowrostergp.sv["NumMembers"]=numGuildMembers;
-			wowrostergp:ScanGuildMembers(numGuildMembers);
-			stat["_guildNum"]=numGuildMembers
-		end
-		wowrostergp:ScanGuildMOTD();
-		wowrostergp.sv["ScanInfo"] = {
-			Character = stat["_player"],
-			IsGuildLeader = (IsGuildLeader()==1 or false),
-			HasOfficerNote = (stat["_officer"]==1 or false)
-			};
-
+	stat["_guilded"]=true;
+	wowrostergp.sv["Info"] = GetGuildInfoText();
+	wowrostergp.sv["FactionEn"],wowrostergp.sv["Faction"] = UnitFactionGroup("player");
+	if(numGuildMembers~=0) then
+		wowrostergp.sv["NumMembers"]=numGuildMembers;
+		wowrostergp:ScanGuildMembers(numGuildMembers);
+		stat["_guildNum"]=numGuildMembers;
+	end
+	wowrostergp:ScanGuildMOTD();
+	wowrostergp.sv["ScanInfo"] = {
+		Character = stat["_player"],
+		IsGuildLeader = (IsGuildLeader()==1 or false),
+		HasOfficerNote = (stat["_officer"]==1 or false)
+	};
 end
+
 function wowrostergp:ScanGuildMOTD()
 	wowrostergp.sv["Motd"] = GetGuildRosterMOTD();
 end
@@ -223,14 +212,14 @@ function wowrostergp:ScanGuildMembers(numMembers)
 		local guildMemberTemp={};
 		for idx=1,numMembers do
 			local name,rank,rankIndex,level,class,zone,note,officernote,online,status,classEn,achievementPoints,achievementRank,isMobile=GetGuildRosterInfo(idx);
-
 			local lastonline;
 			if(name~=nil)then
 				if(stat["_officer"]) then
 				elseif((guildMemberTemp) and guildMemberTemp[name]) then
 					officernote = guildMemberTemp[name]["OfficerNote"];
 				end
--- ################### now hardcode but can be used rankindex and setup in options!
+
+				-- ################### now hardcode but can be used rankindex and setup in options!
 				if (rank=="Alter" or rank=="Alter de Ofi") then
 					local correct = string.find(note,"ALT-");
 					local main = string.sub(note, 5);
@@ -240,9 +229,10 @@ function wowrostergp:ScanGuildMembers(numMembers)
 						addon:Print(string.format(L["Revise public note for %s (%s) = '%s' because %s its not in the guild."],name,rank,note,main));
 					end
 				end
--- ##################				
-				if(not wowrpref["guild"]["title"]) then
-					rank = nil; end
+				-- ##################
+
+				if(not wowrpref["guild"]["title"]) then rank = nil; end
+
 				if(wowrpref["guild"]["compact"]) then
 					if(status=="") then status = nil; end
 					if(note=="") then note = nil; end
@@ -251,6 +241,7 @@ function wowrostergp:ScanGuildMembers(numMembers)
 				if(not online) then
 					lastonline = strjoin(":",GetGuildRosterLastOnline(idx));
 				end
+
 				guildMemberTemp[name] = {
 					Name	= name,
 					Rank	= rankIndex,
@@ -272,6 +263,7 @@ function wowrostergp:ScanGuildMembers(numMembers)
 				cnt=cnt+1;
 			end
 		end
+
 		SetGuildRosterShowOffline(showOfflineTemp);
 		if(numMembers==table.count(guildMemberTemp)) then
 			stat["_guildNum"] = cnt;
@@ -286,27 +278,25 @@ function wowrostergp:ScanGuildMembers(numMembers)
 end
 
 function wowrostergp:ScanProfessions()
-
 	local numTradeSkill = GetNumGuildTradeSkill();
+
 	wowrostergp.sv["Trades"]={};
 	structtrade = {};
 	for index = 1, numTradeSkill do
-
 		local skillID,isCollapsed,iconTexture,headerName,numOnline,numPlayers,playerName,class,online,zone,skill,classFileName = GetGuildTradeSkillInfo(index);
-			if ( headerName ) then		
+			if ( headerName ) then
 				skillHeader=headerName;
 				structtrade[skillHeader] = {
 					skid = skillID,
 					icon = iconTexture,
 					
-					};
+				};
 			elseif( skillHeader ) then
 				structtrade[skillHeader][playerName] = {
 					name = playerName,
 					class = class,
 					lvl = skill,
-					};
-					
+				};
 			end
 	end
 	wowrostergp.sv["Trades"] = structtrade;
@@ -314,11 +304,11 @@ end
 
 function wowrostergp:GUILDBANKBAGSLOTS_CHANGED()
 	stat["Vaultavl"] = false;
-	wowrostergp:ScanGuildBank()	
+	wowrostergp:ScanGuildBank()
 end
 
 function wowrostergp.ScanGuildBankQueue()
-	local queue = wowrostergp.queue
+	local queue = wowrostergp.queue;
 	if(not queue or table.getn(queue) == 0) then return end;
 	for idx,tab in pairs( queue ) do
 		if( tab[1] == "GUILDBANKBAGSLOTS_CHANGED" ) then
@@ -347,9 +337,9 @@ function wowrostergp:ScanGuildBank()
 			QueryGuildBankTab(tab);
 		end
 		_,_,isViewable = GetGuildBankTabInfo(tab);
+
 		if( isViewable ) then
 			wowrostergp.ScanGuildBankTab(tab);
-
 		else
 			wowrostergp.sv["Vault"]["Tabs"]["Tab"..tab]=nil;
 			wowrostergp.sv["Vault"]["Log"]["Tab"..tab]=nil;
@@ -371,7 +361,7 @@ function wowrostergp.ScanGuildBankTab(tab)
 
 	local gb = wowrostergp.sv["Vault"]["Tabs"]["Tab"..tab];
 	local tabName,tabIcon  = GetGuildBankTabInfo(tab);
-	
+
 	gb["Name"] = tabName;
 	gb["Icon"] = wowroster.scanIcon(tabIcon);
 	local itemLink;
@@ -389,14 +379,14 @@ function wowrostergp.ScanGuildBankTab(tab)
 	if(wowrpref["guild"]["vault_log"]) then
 		wowrostergp.ScanGuildBankTabLog(tab)
 	end
-	
+
 	wowrostergp:Print("Tab "..tab.." items "..bagInv.."");
 	stat["Vault"]["Tab"..tab]={slot=MAX_GUILDBANK_SLOTS_PER_TAB,inv=bagInv};
 end
 
 function wowrostergp:ScanItemInfo(itemstr,itemtexture,itemcount,idx,tab)
 	local function numNil(num)
-		if(wowrpref["fixquantity"] and num and num<=1) then return nil
+		if(wowrpref["fixquantity"] and num and num<=1) thenreturn nil
 		else return num
 		end
 	end
@@ -405,12 +395,11 @@ function wowrostergp:ScanItemInfo(itemstr,itemtexture,itemcount,idx,tab)
 		if(not itemName or not itemColor) then
 			itemName,itemColor=wowroster.GetItemInfoTT(self.tooltip);
 		end
-			
-			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
-			GameTooltip:SetGuildBankItem(tab,idx);
-			tooltip = wowroster.scantooltip2();
-			GameTooltip:Hide();
-		
+
+		GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
+		GameTooltip:SetGuildBankItem(tab,idx);
+		tooltip = wowroster.scantooltip2();
+		GameTooltip:Hide();
 		local itemBlock={
 			Name	= itemName,
 			Item	= itemID,
@@ -423,10 +412,10 @@ function wowrostergp:ScanItemInfo(itemstr,itemtexture,itemcount,idx,tab)
 			SubType	= itemSubType,
 			iLevel	= itemLevel,
 			reqLevel= itemReqLevel,
-			};
-
+		};
 		return itemBlock;
 	end
+
 	return nil;
 end
 
@@ -434,6 +423,7 @@ function wowrostergp.ScanGuildBankTabLog(tab)
 	if(not wowrostergp.sv["Vault"]["Log"]["Tab"..tab]) then
 		wowrostergp.sv["Vault"]["Log"]["Tab"..tab]={};
 	end
+
 	local db = wowrostergp.sv["Vault"]["Log"]["Tab"..tab];
 	local type, name, itemLink, count, tab1, tab2, year, month, day, hour;
 	local itemID
@@ -498,13 +488,6 @@ function wowrostergp.ScanGuildBankMoneyLog()
 end
 
 
-
-
-
-
 function wowrostergp:Print(...)
 	print("|cff33ff88WoWR-GP|r:", ...)
 end
-
-
-
