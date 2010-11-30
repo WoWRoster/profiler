@@ -997,7 +997,7 @@ function wowroster:ScanGlyphs(startGlyph)
 				local enabled, glyphType, glyphTooltipIndex, glyphSpell, icon = GetGlyphSocketInfo(index,TalentGroup);
 				if(enabled == 1 and glyphSpell) then
 					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
-					GameTooltip:SetGlyph(index);
+					GameTooltip:SetGlyph(index,TalentGroup);
 					local name, link = GameTooltip:GetItem()
 					tooltip = wowroster.scantooltip2()
 					GameTooltip:Hide()
