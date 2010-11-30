@@ -68,6 +68,7 @@ end
 
 function wowrostergp:OnInitialize()
 	wowrostergp:InitState()
+	self.sv = LibStub("AceDB-3.0"):New("cpProfile");
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
