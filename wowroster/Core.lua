@@ -1,35 +1,55 @@
 
-
 wowroster = LibStub("AceAddon-3.0"):NewAddon("wowroster", "AceConsole-3.0", "AceEvent-3.0")
 local acr = LibStub("AceConfigRegistry-3.0")
 local state = {};
 local acd = LibStub("AceConfigDialog-3.0")
 local ac = LibStub("AceConfig-3.0")
-local f = CreateFrame('GameTooltip', 'MyTooltip', UIParent, 'GameTooltipTemplate') 
+local f = CreateFrame('GameTooltip', 'MyTooltip', UIParent, 'GameTooltipTemplate')
 --local msg = "";
+
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
+
 wowroster.class = {WARRIOR=1,PALADIN=2,HUNTER=3,ROGUE=4,PRIEST=5,DEATHKNIGHT=6,SHAMAN=7,MAGE=8,WARLOCK=9,DRUID=11};
 wowroster.race = {Human=1,Orc=2,Dwarf=3,NightElf=4,Scourge=5,Tauren=6,Gnome=7,Troll=8,BloodElf=10,Draenei=11};
-wowroster.sex = {1 ="Neuter / Unknown",2=Male,3=Female};
+
+--[UnitClass] arg1:unit
+wowroster.UnitSex = function(arg1)
+	local UnitSexLabel={UNKNOWN,MALE,FEMALE};
+	local unitSexID=UnitSex(arg1);
+	return UnitSexLabel[unitSexID],mod(unitSexID,2);
+end
+
+--[UnitClass] arg1:unit
+wowroster.UnitClass = function(arg1)
+	local unitClass,unitClassEn=UnitClass(arg1);
+	return unitClass,unitClassEn,wowroster.class[unitClassEn];
+end
+
+--[UnitRace] arg1:unit
+wowroster.UnitRace = function(arg1)
+	local unitRace,unitRaceEn=UnitRace(arg1);
+	return unitRace,unitRaceEn,wowroster.race[unitRaceEn];
+end
+
 local stat = {
-		_loaded=nil,_lock=nil,_bag=nil,_bank=nil,_mail=nil,
-		_server=GetRealmName(),_player=UnitName("player"),_class=class,
-		_skills={},
-		Equipment=0,
-		Guild=nil, GuildNum=nil,
-		Skills=0, Glyphs=0,
-		Talents={},DSTalents={},TalentPts=0,
-		Reputation=0,
-		Quests=0, QuestsLog=0,
-		Mail=nil,
-		Honor=nil,
-		Bag={},Inventory={},Bank={},
-		Professions={}, SpellBook={},
-		Pets={}, Stable={}, PetSpell={}, PetTalent={},
-		Companions={},
-	};
+	_loaded=nil,_lock=nil,_bag=nil,_bank=nil,_mail=nil,
+	_server=GetRealmName(),_player=UnitName("player"),_class=class,
+	_skills={},
+	Equipment=0,
+	Guild=nil, GuildNum=nil,
+	Skills=0, Glyphs=0,
+	Talents={},DSTalents={},TalentPts=0,
+	Reputation=0,
+	Quests=0, QuestsLog=0,
+	Mail=nil,
+	Honor=nil,
+	Bag={},Inventory={},Bank={},
+	Professions={}, SpellBook={},
+	Pets={}, Stable={}, PetSpell={}, PetTalent={},
+	Companions={},
+};
 local defaults={
 	profile={
 		["enabled"]=true,
@@ -138,9 +158,7 @@ function wowroster:OnInitialize()
 	wowroster:makeconfig()
 	wowroster.UpdateDate = wowroster:UpdateDate();
 end
-wowroster.UnitClassID = function(classEn)
-	return wowroster.class[classEn];
-end
+
 function wowroster:UpdateDate()
 	if(not wowroster.db) then return; end;
 	local struct=wowroster.db;
@@ -189,7 +207,7 @@ function wowroster:Show()
 				table.foreach(stat["Professions"], function (k,v) table.insert(tsort,k) end );
 				table.sort(tsort);
 				if(table.getn(tsort)==0) then
-					msg=msg..wowroster.StringColorize(rpgo.colorRed," not scanned")..".  - open each profession to scan";
+					msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open each profession to scan";
 				else
 					for _,item in pairs(tsort) do
 						msg=msg .. " " .. item..":"..stat["Professions"][item]["ct"].." errors("..stat["Professions"][item]["errors"]..")";
@@ -527,9 +545,7 @@ function wowroster:InitProfile()
 		cpProfile[self.state["_server"]]["Character"][self.state["_player"]]={}; end
 
 	self.db = cpProfile[self.state["_server"]]["Character"][self.state["_player"]];
-	
-	local class,_=UnitClass("player");
-	local gender = UnitSex("unit");
+
 	if( self.db ) then
 		self.db["CPversion"]	= "1.0";
 		self.db["CPprovider"]	= "wowr";
@@ -538,10 +554,8 @@ function wowroster:InitProfile()
 		self.db["Server"]		= self.state["_server"];
 		self.db["Locale"]		= GetLocale();
 		self.db["Race"],self.db["RaceEn"],self.db["RaceId"]=UnitRace("player")
-		self.db["Class"],self.db["ClassEn"]=UnitClass("player");
-		self.db["ClassId"] = wowroster.class[self.db["ClassEn"]];
-		self.db["Sex"] = wowroster.sex[gender];
-		self.db["SexId"]=UnitSex("unit");
+		self.db["Class"],self.db["ClassEn"],self.db["ClassId"]=wowroster.UnitClass("player");
+		self.db["Sex"],self.db["SexId"]=wowroster.UnitSex("player");
 		self.db["FactionEn"],self.db["Faction"]=UnitFactionGroup("player");
 		self.db["HasRelicSlot"]	= UnitHasRelicSlot("player")==1 or false;
 		self.db["timestamp"] = {};
@@ -2090,7 +2104,7 @@ wowroster.parseMoney = function(money)
 		copper=mod(money,COPPER_PER_SILVER);
 	return gold,silver,copper;
 end
---[rpgo.round](num,[digit])
+--[wowroster.round](num,[digit])
 wowroster.round = function(num,digit)
 	if(not tonumber(num)) then return nil; end
 	if(digit==nil) then digit=0; end
