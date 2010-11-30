@@ -27,6 +27,11 @@ wowroster.UnitClass = function(arg1)
 	return unitClass,unitClassEn,wowroster.class[unitClassEn];
 end
 
+--[UnitClassID] arg1:unit
+wowroster.UnitClassID = function(classEn)
+	return wowroster.class[classEn];
+end
+
 --[UnitRace] arg1:unit
 wowroster.UnitRace = function(arg1)
 	local unitRace,unitRaceEn=UnitRace(arg1);
