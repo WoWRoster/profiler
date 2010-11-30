@@ -5,7 +5,7 @@ local acd = LibStub("AceConfigDialog-3.0")
 local ac = LibStub("AceConfig-3.0")
 local f = CreateFrame('GameTooltip', 'MyTooltip', UIParent, 'GameTooltipTemplate') 
 
-
+if(not wowroster) then wowroster={}; end
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
@@ -114,6 +114,11 @@ function wowrostergp:gpexport()
 end
 
 function wowrostergp:InitProfile()
+	if( not IsInGuild() ) then
+		stat["_guilded"]=false;
+		stat["_loaded"] = false;
+		return stat["_loaded"];
+	end
 	if( not cpProfile ) then
 		cpProfile={}; 
 	end
@@ -386,7 +391,7 @@ end
 
 function wowrostergp:ScanItemInfo(itemstr,itemtexture,itemcount,idx,tab)
 	local function numNil(num)
-		if(wowrpref["fixquantity"] and num and num<=1) thenreturn nil
+		if(wowrpref["fixquantity"] and num and num<=1) then return nil
 		else return num
 		end
 	end
