@@ -11,6 +11,8 @@ if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
 wowroster.class = {WARRIOR=1,PALADIN=2,HUNTER=3,ROGUE=4,PRIEST=5,DEATHKNIGHT=6,SHAMAN=7,MAGE=8,WARLOCK=9,DRUID=11};
+wowroster.race = {Human=1,Orc=2,Dwarf=3,NightElf=4,Scourge=5,Tauren=6,Gnome=7,Troll=8,BloodElf=10,Draenei=11};
+wowroster.sex = {1 ="Neuter / Unknown",2=Male,3=Female};
 local stat = {
 		_loaded=nil,_lock=nil,_bag=nil,_bank=nil,_mail=nil,
 		_server=GetRealmName(),_player=UnitName("player"),_class=class,
@@ -525,6 +527,9 @@ function wowroster:InitProfile()
 		cpProfile[self.state["_server"]]["Character"][self.state["_player"]]={}; end
 
 	self.db = cpProfile[self.state["_server"]]["Character"][self.state["_player"]];
+	
+	local class,_=UnitClass("player");
+	local gender = UnitSex("unit");
 	if( self.db ) then
 		self.db["CPversion"]	= "1.0";
 		self.db["CPprovider"]	= "wowr";
@@ -533,8 +538,10 @@ function wowroster:InitProfile()
 		self.db["Server"]		= self.state["_server"];
 		self.db["Locale"]		= GetLocale();
 		self.db["Race"],self.db["RaceEn"],self.db["RaceId"]=UnitRace("player")
-		self.db["Class"],self.db["ClassEn"],self.db["ClassId"]=UnitClass("player");
-		self.db["Sex"],self.db["SexId"]=UnitSex("player");
+		self.db["Class"],self.db["ClassEn"]=UnitClass("player");
+		self.db["ClassId"] = wowroster.class[self.db["ClassEn"]];
+		self.db["Sex"] = wowroster.sex[gender];
+		self.db["SexId"]=UnitSex("unit");
 		self.db["FactionEn"],self.db["Faction"]=UnitFactionGroup("player");
 		self.db["HasRelicSlot"]	= UnitHasRelicSlot("player")==1 or false;
 		self.db["timestamp"] = {};
