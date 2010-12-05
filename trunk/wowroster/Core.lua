@@ -1815,7 +1815,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 			if(bagid=="player") then
 			
 				--GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
-				wowroster.tooltip:SetInventoryItem("player",slot);
+				GameTooltip:SetInventoryItem("player",slot);
 				tooltip = wowroster.scantooltip2(); --- this is a test for zanix
 				wowroster.tooltip:Hide();
 				link = GetInventoryItemLink("player",slot);
