@@ -1469,9 +1469,9 @@ function wowroster:TRADE_SKILL_SHOW()
 --wowroster.db["Professions"] = {};
     local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions();
 	local skillLineName,skillLineRank,skillLineMaxRank=GetTradeSkillLine();
-	local skills = wowroster.db["Professions"];
+	--local skills = wowroster.db["Professions"];
 	local cnt = 0;
-	
+	local skills = {};
 	if(not skillLineName or skillLineName=="" or skillLineName==UNKNOWN) then
 		return;
 	end
