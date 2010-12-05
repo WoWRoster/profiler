@@ -1477,8 +1477,9 @@ function wowroster:TRADE_SKILL_SHOW()
 	if(not skillLineName or skillLineName=="" or skillLineName==UNKNOWN) then
 		return;
 	end
-	if(not skills[skillLineName] or not wowroster.db["Professions"][skillLineName]) then
+	if(not wowroster.db["Professions"][skillLineName]) then
 			skills[skillLineName]={};
+			
 	end
 	--wowroster:Print("Scanning ".. skillLineName .."");
 	idxStart = 1;
