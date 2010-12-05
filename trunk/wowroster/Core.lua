@@ -1471,16 +1471,16 @@ function wowroster:TRADE_SKILL_SHOW()
 	local skillLineName,skillLineRank,skillLineMaxRank=GetTradeSkillLine();
 	local skills = wowroster.db["Professions"];
 	local cnt = 0;
-	stat["Professions"][skillLineName] = {};
-	stat["Professions"][skillLineName]["errors"] = 0;
-	stat["Professions"][skillLineName]["ct"] = 0;
+	
 	if(not skillLineName or skillLineName=="" or skillLineName==UNKNOWN) then
 		return;
 	end
-	if(not wowroster.db["Professions"][skillLineName]) then
+	if(not skills[skillLineName] or not stat[skillLineName]) then
 			skills[skillLineName]={};
-			
-	end
+			stat["Professions"][skillLineName] = {};
+			stat["Professions"][skillLineName]["errors"] = 0;
+			stat["Professions"][skillLineName]["ct"] = 0;
+		end
 	--wowroster:Print("Scanning ".. skillLineName .."");
 	idxStart = 1;
 	local numTradeSkills = GetNumTradeSkills();
