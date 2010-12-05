@@ -13,7 +13,7 @@ if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
 
 wowroster.class = {WARRIOR=1,PALADIN=2,HUNTER=3,ROGUE=4,PRIEST=5,DEATHKNIGHT=6,SHAMAN=7,MAGE=8,WARLOCK=9,DRUID=11};
 wowroster.race = {Human=1,Orc=2,Dwarf=3,NightElf=4,Scourge=5,Tauren=6,Gnome=7,Troll=8,BloodElf=10,Draenei=11};
-
+wowroster.tooltip = "wowrcptooltip";
 --[UnitClass] arg1:unit
 wowroster.UnitSex = function(arg1)
 	local UnitSexLabel={UNKNOWN,MALE,FEMALE};
@@ -1548,6 +1548,7 @@ function wowroster:TRADE_SKILL_SHOW()
 end
 
 
+
 wowroster.scantooltip2 = function()
 local ttName = "GameTooltip";
 local isHTML = true
@@ -1754,6 +1755,49 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 end
 
 
+--[ScanTooltipOO]
+wowroster.ScanTooltipOO = function(wowroster)
+	if( not wowroster.tooltipname ) then
+		wowroster.tooltipname=UIParent.GetName(wowroster.tooltip);
+	end
+	if( not wowroster.tooltip:IsOwned(UIParent) ) then
+		wowroster:PrintDebug("tooltip fix owner");
+		wowroster.tooltip:SetOwner(UIParent,"ANCHOR_NONE");
+	end
+	return wowroster.ScanTooltip(wowroster.tooltipname,wowroster.tooltip,true)
+end
+--[ScanTooltip] ttName,ttFrame,isHTML
+wowroster.ScanTooltip = function(ttName,ttFrame,isHTML)
+	if(ttFrame and ttFrame:NumLines()~=0) then
+		local idx,ttFontStr,tmpbuff,ttText=nil,nil,nil,{};
+		for idx=1,ttFrame:NumLines() do
+			tmpbuff=nil;
+			ttFontStr=getglobal(ttName.."TextLeft"..idx);
+			if(ttFontStr and ttFontStr:IsShown()) then
+				tmpbuff=ttFontStr:GetText();
+				if (ttFontStr) then
+					tmpbuff=string.gsub(tmpbuff,"\n","<br>");
+					tmpbuff=string.gsub(tmpbuff,"\r","");
+				end
+			end
+			ttFontStr=getglobal(ttName.."TextRight"..idx);
+			if(ttFontStr and ttFontStr:IsShown() and ttFontStr:GetText()) then
+				if(tmpbuff) then
+					tmpbuff=tmpbuff.."\t"..ttFontStr:GetText();
+				else
+					tmpbuff=ttFontStr:GetText();
+				end
+			end
+			if(tmpbuff) then table.insert(ttText,tmpbuff); end
+		end
+		ttFrame:ClearLines();
+		if(isHTML) then return table.concat(ttText,"<br>");
+		else return ttText; end
+	end
+	return nil
+end
+
+
 function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 	local function numNil(num)
 		if(wowrpref["fixquantity"] and num and num<=1) then return nil
@@ -1767,10 +1811,10 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		end
 			if(bagid=="player") then
 			
-				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
-				GameTooltip:SetInventoryItem("player",slot);
-				tooltip = wowroster.scantooltip2();
-				GameTooltip:Hide();
+				--GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
+				wowroster.tooltip:SetInventoryItem("player",slot);
+				tooltip = wowroster.ScanTooltipOO(); --- this is a test for zanix
+				wowroster.tooltip:Hide();
 				link = GetInventoryItemLink("player",slot);
 				
 			elseif(bagid==BANK_CONTAINER) then
