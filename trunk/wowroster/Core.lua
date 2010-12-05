@@ -1758,9 +1758,9 @@ end
 
 --[ScanTooltipOO]
 wowroster.ScanTooltipOO = function(wowroster)
-	if( not wowroster.tooltipname ) then
+
 		wowroster.tooltipname=UIParent.GetName(wowroster.tooltip);
-	end
+
 	if( not wowroster.tooltip:IsOwned(UIParent) ) then
 		wowroster:PrintDebug("tooltip fix owner");
 		wowroster.tooltip:SetOwner(UIParent,"ANCHOR_NONE");
