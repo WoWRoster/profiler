@@ -153,7 +153,8 @@ function wowroster:OnInitialize()
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
-	
+	self.tooltip = CreateFrame("GameTooltip",self.tooltip,UIParent,"GameTooltipTemplate");
+	self.tooltip:SetOwner(UIParent,"ANCHOR_NONE");
 	self.db.RegisterCallback(self, "OnProfileChanged", profileUpdate)
 	self.db.RegisterCallback(self, "OnProfileCopied", profileUpdate)
 	self.db.RegisterCallback(self, "OnProfileReset", profileUpdate)
