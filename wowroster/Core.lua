@@ -1472,11 +1472,12 @@ function wowroster:TRADE_SKILL_SHOW()
 	--local skills = wowroster.db["Professions"];
 	local cnt = 0;
 	local skills = {};
+	local skills = wowroster.db["Professions"][skillLineName];--{};
 	if(not skillLineName or skillLineName=="" or skillLineName==UNKNOWN) then
 		return;
 	end
 
-			skills[skillLineName]={};
+			--skills[skillLineName]={};
 			stat["Professions"][skillLineName] = {};
 			stat["Professions"][skillLineName]["errors"] = 0;
 			stat["Professions"][skillLineName]["ct"] = 0;
@@ -1815,7 +1816,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 			
 				--GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
 				wowroster.tooltip:SetInventoryItem("player",slot);
-				tooltip = wowroster.ScanTooltipOO(); --- this is a test for zanix
+				tooltip = wowroster.scantooltip2(); --- this is a test for zanix
 				wowroster.tooltip:Hide();
 				link = GetInventoryItemLink("player",slot);
 				
