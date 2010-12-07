@@ -1814,9 +1814,9 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		end
 			if(bagid=="player") then
 			
-				--GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
+				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
 				GameTooltip:SetInventoryItem("player",slot);
-				tooltip = wowroster.scantooltip2(); --- this is a test for zanix
+				tooltip = wowroster.scantooltip2();
 				wowroster.tooltip:Hide();
 				link = GetInventoryItemLink("player",slot);
 				
@@ -1842,6 +1842,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		local itemBlock={
 			Name	= itemName,
 			Item	= itemID,
+			Link	= link,
 			Color	= wowroster.scanColor(itemColor),
 			Rarity	= itemRarity,
 			Quantity= numNil(itemcount),
@@ -1852,23 +1853,128 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 			iLevel	= itemLevel,
 			reqLevel= itemReqLevel,
 			};
-		if( wowroster.ItemHasGem(link) ) then
-			itemBlock["Gem"] = {};
-			for gemID=1,3 do
-				local _,gemItemLink = GetItemGem(link,gemID);
-				if(gemItemLink) then
-					Gametooltip:SetHyperlink(gemItemLink);
-					itemBlock["Gem"][gemID]=self:ScanItemInfo(gemItemLink,nil,1);
-				end
-			end
-		end
+		
+		if( wowroster.ItemHasGem(itemID) ) then
+			
 
+				local gem1, gem2, gem3 = GetInventoryItemGems(slot);
+				local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemID,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
+				itemBlock["Gem"] = {};
+			
+					--wowroster:Print("gem "..gem1.." "..gem2.." "..gem3.."");
+				if (gid1 ~= 0) then
+
+					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem1);
+					--wowroster:Print("gem "..itemName.." "..gem1.." ");
+					
+					if (itemLink)then
+					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
+					GameTooltip:SetHyperlink(itemLink);
+					tooltip = wowroster.scantooltip2();
+					GameTooltip:Hide();
+					else
+						tooltip = nil;
+					end
+					
+					
+					itemBlock["Gem"][1]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
+						Name = itemName,
+						Item = gem1,
+						gemID = gid1,
+						Color	= wowroster.scanColor(itemColor),
+						Link = itemLink,
+						Tooltip = tooltip,
+						Icon = wowroster.scanIcon(itemTexture),
+					};
+				end
+				
+				if (gid2 ~= 0) then
+
+					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem2);
+					--wowroster:Print("gem "..itemName.." "..gem1.." ");
+					
+					if (itemLink)then
+					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
+					GameTooltip:SetHyperlink(itemLink);
+					tooltip = wowroster.scantooltip2();
+					GameTooltip:Hide();
+					else
+						tooltip = nil;
+					end
+					
+					
+					itemBlock["Gem"][2]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
+						Name = itemName,
+						Item = gem2,
+						gemID = gid2,
+						Color	= wowroster.scanColor(itemColor),
+						Link = itemLink,
+						Tooltip = tooltip,
+						Icon = wowroster.scanIcon(itemTexture),
+					};
+				end
+				
+				if (gid3 ~= 0) then
+
+					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem3);
+					--wowroster:Print("gem "..itemName.." "..gem1.." ");
+					
+					if (itemLink)then
+					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
+					GameTooltip:SetHyperlink(itemLink);
+					tooltip = wowroster.scantooltip2();
+					GameTooltip:Hide();
+					else
+						tooltip = nil;
+					end
+					
+					
+					itemBlock["Gem"][3]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
+						Name = itemName,
+						Item = gem3,
+						gemID = gid3,
+						Color	= wowroster.scanColor(itemColor),
+						Link = itemLink,
+						Tooltip = tooltip,
+						Icon = wowroster.scanIcon(itemTexture),
+					};
+				end
+		end
 		return itemBlock;
 	end
 	return nil;
 end
 
+--[ItemHasGem] itemStr
+wowroster.ItemHasGem = function(itemStr)
+--[[	local gid1,gid2,gid3;
+	if(itemStr) then _,_,gid1,gid2,gid3,_,_,_,_=string.find(itemStr,"|Hitem:%d+:[-%d]+:([-%d]+):([-%d]+):([-%d]+):[-%d]+:[-%d]+:[-%d]+:[%d]+|h");
+		if( gid1 and gid2 and gid3 and gid1+gid2+gid3 ~= 0) then
+			wowroster:Print("has gem "..itemStr.."");
+			return true;
+			
 
+		end
+	end
+	]]--
+	--wowroster:Print("checking "..itemStr.."");
+	local gem1name, gem1Link = GetItemGem(itemStr, 1)
+	--if (gem1name) then
+	
+	
+																--47595:3832:3733:3537:3531:0:0:1597318272:80:0
+	wowroster:Print("lk "..itemStr.."");
+	if(itemStr) then 
+	local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
+		if( gid1 and gid2 and gid3 and gid1+gid2+gid3 ~= 0) then
+			--wowroster:Print("has gem "..gid1.." "..gid2.." "..gid3.."");
+			return true;
+		else
+			return nil;
+		end
+	end
+	return nil;
+end
 
 --[[
 begin spellbook functions
@@ -2049,16 +2155,7 @@ end
 
 
 
---[ItemHasGem] itemStr
-wowroster.ItemHasGem = function(itemStr)
-	local gid1,gid2,gid3;
-	if(itemStr) then _,_,gid1,gid2,gid3=string.find(itemStr,"|Hitem:%d+:[-%d]+:([-%d]+):([-%d]+):([-%d]+):[-%d]+:[-%d]+:[-%d]+:[%d]+|h");
-		if( gid1 and gid2 and gid3 and gid1+gid2+gid3 ~= 0) then
-			return true;
-		end
-	end
-	return nil;
-end
+
 
 --[GetItemInfo] itemStr
 wowroster.GetItemInfo = function(itemStr)
