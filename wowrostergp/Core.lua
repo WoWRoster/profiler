@@ -35,8 +35,8 @@ local function findPanel(name, parent)
 end
 
 function wowrostergp:OnEnable()
-	self:RegisterEvent("GUILDBANKFRAME_OPENED")
-	self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
+	--self:RegisterEvent("GUILDBANKFRAME_OPENED")
+	--self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	self:RegisterEvent("ADDON_LOADED")
 	wowrostergp:Print("WoWR-GP Enabled!");
 end
@@ -72,6 +72,7 @@ function wowrostergp:OnInitialize()
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
+	self.sv = LibStub("AceDB-3.0"):New("cpProfile");
 	wowrostergp:InitProfile()
 end
 
