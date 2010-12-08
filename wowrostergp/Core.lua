@@ -72,7 +72,6 @@ function wowrostergp:OnInitialize()
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
-	self.sv = LibStub("AceDB-3.0"):New("cpProfile");
 	wowrostergp:InitProfile()
 end
 
@@ -135,6 +134,7 @@ function wowrostergp:InitProfile()
 	end
 
 	self.sv = cpProfile[stat["_server"]]["Guild"][stat["_guild"]];
+	local currentXP, nextLevelXP, dailyXP, maxDailyXP = UnitGetGuildXP("player");
 	if( self.sv ) then
 		self.sv["GPversion"]	= "1.0";
 		self.sv["CPprovider"]	= "wowr";
@@ -142,6 +142,9 @@ function wowrostergp:InitProfile()
 		self.sv["GuildName"]	= stat["_guild"];
 		self.sv["Server"]		= stat["_server"];
 		self.sv["Locale"]		= GetLocale();
+		self.sv["GuildXP"]		= currentXP..":"..nextLevelXP;
+		self.sv["GuildXPCap"]		= dailyXP..":"..maxDailyXP;
+		self.sv["GuildLevel"]	= GetGuildLevel();
 		self.sv["FactionEn"],self.sv["Faction"]=UnitFactionGroup("player");
 		self.sv["timestamp"] = {};
 		wowrostergp:UpdateDate();
@@ -157,6 +160,7 @@ function wowrostergp:UpdateDate()
 	if ( not struct["timestamp"] ) then struct["timestamp"]={}; end;
 	local timestamp = time();
 	local currHour,currMinute=GetGameTime();
+	struct["timestamp"]={};
 	struct["timestamp"]["init"]={};
 	struct["timestamp"]["init"]["TimeStamp"]=timestamp;
 	struct["timestamp"]["init"]["Date"]=date("%Y-%m-%d %H:%M:%S",timestamp);
@@ -279,7 +283,7 @@ function wowrostergp:ScanGuildMembers(numMembers)
 				stat["_guildInfo"]=numMembers;
 			end
 			wowrostergp.sv["Members"]=guildMemberTemp;
-			wowrostergp.sv["timestamp"]["Members"]=time();
+			--=--wowrostergp.sv["timestamp"]["Members"]=time();
 		end
 	end
 end
