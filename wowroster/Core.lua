@@ -162,7 +162,7 @@ function wowroster:OnInitialize()
 	wowroster:InitProfile()
 	--self.db = db
 	wowroster:makeconfig()
-	wowroster.UpdateDate = wowroster:UpdateDate();
+	wowroster:UpdateDate();
 end
 
 function wowroster:UpdateDate()
@@ -177,20 +177,22 @@ function wowroster:UpdateDate()
 	struct["timestamp"]["init"]["DateUTC"]=date("!%Y-%m-%d %H:%M:%S",timestamp);
 	struct["timestamp"]["init"]["ServerTime"]=format("%02d:%02d",currHour,currMinute);
 	struct["timestamp"]["init"]["datakey"]=wowroster.versionkey();
+	struct["timestamp"]["SpellBook"]={};
 end
 --[[
 this function is fired when the paperdaul frame button is pressed
 ]]--
 function wowroster:export()
-	wowroster:Print("export button call")
-	wowroster:GetSpellBook()
+	wowroster:Print("export button call");
+	wowroster:UpdateDate();
+	wowroster:GetSpellBook();
 	wowroster:GetInventory();
 	wowroster:GetBuffs(wowroster.db);
 	wowroster:GetEquipment();
 	wowroster:GetTalents();
 	
 	wowroster:ScanCurrency();
-
+	wowroster:SKILLS();
 	wowroster:ScanGlyphs();
 	wowroster:GetReputation();
 	wowroster:GetQuests();
@@ -576,6 +578,7 @@ wowroster.UpdateDate = function(self,...)
 	if ( not struct["timestamp"] ) then struct["timestamp"]={}; end
 	local timestamp = time();
 	local currHour,currMinute=GetGameTime();
+	struct["timestamp"]={};
 	struct["timestamp"]["init"]={};
 	struct["timestamp"]["init"]["TimeStamp"]=timestamp;
 	struct["timestamp"]["init"]["Date"]=date("%Y-%m-%d %H:%M:%S",timestamp);
@@ -1463,7 +1466,36 @@ function wowroster:GetBuffs(structBuffs,unit)
 	end
 end
 
+function wowroster:SKILLS()
 
+	local prof1, prof2, a, b, c, d = GetProfessions();
+	--local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(index)
+	skill = {};
+	skill["Secondary Skills"]={};
+	skill["Professions"]={};
+	
+	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(prof1);
+	skill["Professions"][name] = skillLevel..":"..maxSkillLevel;
+	local name2, icon2, skillLevel2, maxSkillLevel2, numAbilities2, spelloffset2, skillLine2, skillModifier2 = GetProfessionInfo(prof2);
+	skill["Professions"][name2] = skillLevel2..":"..maxSkillLevel2;
+	skill["Professions"]["Order"] = "1";
+	local namea, icona, skillLevela, maxSkillLevela, numAbilitiesa, spelloffseta, skillLinea, skillModifiera = GetProfessionInfo(a);
+	skill["Secondary Skills"][namea] = skillLevela..":"..maxSkillLevela;
+	--skill["Secondary Skills"][namea]["test"] = skillLinea;
+	
+	local nameb, iconb, skillLevelb, maxSkillLevelb, numAbilitiesb, spelloffsetb, skillLineb, skillModifierb = GetProfessionInfo(b);
+	skill["Secondary Skills"][nameb] = skillLevelb..":"..maxSkillLevelb;
+	
+	local namec, iconc, skillLevelc, maxSkillLevelc, numAbilitiesc, spelloffsetc, skillLinec, skillModifierc = GetProfessionInfo(c);
+	skill["Secondary Skills"][namec] = skillLevelc..":"..maxSkillLevelc;
+	
+	local named, icond, skillLeveld, maxSkillLeveld, numAbilitiesd, spelloffsetd, skillLined, skillModifierd = GetProfessionInfo(d);
+	skill["Secondary Skills"][named] = skillLeveld..":"..maxSkillLeveld;
+	skill["Secondary Skills"]["Order"] = "2";
+	
+	wowroster.db["Skills"] = skill;
+	
+end
 
 function wowroster:TRADE_SKILL_SHOW()
 --wowroster.db["Professions"] = {};
@@ -1471,16 +1503,26 @@ function wowroster:TRADE_SKILL_SHOW()
 	local skillLineName,skillLineRank,skillLineMaxRank=GetTradeSkillLine();
 	--local skills = wowroster.db["Professions"];
 	local cnt = 0;
-	local skills = {};
-	local skills = wowroster.db["Professions"][skillLineName];--{};
-	if(not skillLineName or skillLineName=="" or skillLineName==UNKNOWN) then
-		return;
+	stat["Professions"][skillLineName] = {};
+	if ( not wowroster.db["Professions"] ) then
+		wowroster.db["Professions"]={};
 	end
-
-			--skills[skillLineName]={};
-			stat["Professions"][skillLineName] = {};
-			stat["Professions"][skillLineName]["errors"] = 0;
-			stat["Professions"][skillLineName]["ct"] = 0;
+	if ( not wowroster.db["Professions"] ) then
+		wowroster.db["Professions"]={};
+	end
+	--[[
+	if ( not wowroster.db["timestamp"]["Professions"] ) then
+		wowroster.db["timestamp"]["Professions"]={};
+	end
+]]--
+	--wowroster.db["timestamp"]["Professions"]={};
+	local skills=wowroster.db["Professions"];
+	stat["Professions"][skillLineName]["ct"] = 0;
+	stat["Professions"][skillLineName]["errors"] = 0;
+	
+	if(not skills[skillLineName] ) then
+			skills[skillLineName]={};
+		end
 
 	--wowroster:Print("Scanning ".. skillLineName .."");
 	idxStart = 1;
@@ -1510,11 +1552,11 @@ function wowroster:TRADE_SKILL_SHOW()
 						if(reagentName) then
 							
 						itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, _,_, itemTexture, itemSellPrice = GetItemInfo(reagentName);
-							reagentID  = wowroster.GetItemID( itemLink )
+							reagentID  = wowroster.GetItemID( reagentLink )
 							GameTooltip:SetTradeSkillItem(idx,j) --SetTradeSkillItem(idx)
 							tooltip = wowroster.scantooltip2()
 							itexture = wowroster.scanIcon(itemTexture)
-							table.insert(reagentlist,{name=reagentName,texture=itexture,Tooltip=tooltip,itemID=reagentID,count=reagentCount,link=reagentLink});
+							table.insert(reagentlist,{name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Count=reagentCount,link=reagentLink});
 							reagentc = reagentc+1;
 						end
 					end
@@ -1536,18 +1578,18 @@ function wowroster:TRADE_SKILL_SHOW()
 						numMade = GetTradeSkillNumMade(idx),
 						itemLink= GetTradeSkillItemLink(idx),
 						Reagentsnum = numReagents,
-						reagents = reagentlist,
-						skillIcon = wowroster.scanIcon(Icon),
+						Reagents = reagentlist,
+						Icon = wowroster.scanIcon(Icon),
 						desc  = description,
-						Tooltip	= tooltip,
-					};
+						Tooltip	= tooltip};
+						
 					cnt = cnt+1;
 
 				end
 			end
 		end	
 		stat["Professions"][skillLineName]["ct"] = cnt;
-		wowroster.db["Professions"] = skills				
+		--wowroster.db = skills				
 end
 
 
@@ -1862,7 +1904,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 				itemBlock["Gem"] = {};
 			
 					--wowroster:Print("gem "..gem1.." "..gem2.." "..gem3.."");
-				if (gid1 ~= 0) then
+				if (gid1 ~= '0') then
 
 					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem1);
 					--wowroster:Print("gem "..itemName.." "..gem1.." ");
@@ -1888,7 +1930,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 					};
 				end
 				
-				if (gid2 ~= 0) then
+				if (gid2 ~= '0') then
 
 					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem2);
 					--wowroster:Print("gem "..itemName.." "..gem1.." ");
@@ -1914,7 +1956,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 					};
 				end
 				
-				if (gid3 ~= 0) then
+				if (gid3 ~= '0') then
 
 					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem3);
 					--wowroster:Print("gem "..itemName.." "..gem1.." ");
@@ -1988,6 +2030,10 @@ function wowroster:GetSpellBook()
 	if ( not wowroster.db["SpellBook"] ) then
 		wowroster.db["SpellBook"]={};
 	end
+	if ( not wowroster.db["timestamp"]["SpellBook"] ) then
+		wowroster.db["timestamp"]["SpellBook"] = {};
+	end
+	
 	local Spelltotal = 0
 	local structSpell=wowroster.db["SpellBook"];
 	for spellTab=1,GetNumSpellTabs() do
