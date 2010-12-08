@@ -96,7 +96,8 @@ function wowrostergp:gpexport()
 	if(wowrpref["guild"]["trades"]) then
 		wowrostergp:ScanProfessions()
 	end
-
+	msg = stat["_guild"];
+	wowrostergp:Print(msg);
 	msg = "Vault:";
 	tsort={};
 	table.foreach(stat["Vault"], function(k,v) table.insert(tsort,k) end );
