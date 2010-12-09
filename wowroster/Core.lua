@@ -163,7 +163,7 @@ local server = GetRealmName();
 		if(cpProfile[server] and cpProfile[server]["Character"] and cpProfile[server]["Character"][msg[2]]) then
 			cpProfile[server]["Character"][msg[2]]=nil;
 			isPurged=true;
-			wowroster:Print("Player "..msg[2[.."@"..server.." purged");
+			wowroster:Print("Player "..msg[2].."@"..server.." purged");
 		end
 		return;
 	end
