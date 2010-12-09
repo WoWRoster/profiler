@@ -132,8 +132,73 @@ function wowroster:OnEnable()
 	self.buttons.save = button	
 	wowroster:Print("Hello, WoW Roster Profiler Enabled");
 	wowroster:Print("Hello, WoW Roster Profiler Loaded go to the addons tab in the Interface config section of wow to configure the addon ");
+
+	wowroster:RegisterChatCommand("rpurge", "WOWRP_ChatCommandHandler");
+
+	
+	
 end
 
+function wowroster:WOWRP_ChatCommandHandler(argline)
+--wowroster:Print("purge "..argline.." ");
+	local msg = wowroster.Str2Ary(argline);
+--wowroster:Print("purge "..msg[1].." "..msg[2].."");
+local server = GetRealmName();	
+	if ( msg[1] == "" ) then
+		wowroster:Print(" the followinga re the purge commands for the addon NOTE these only work on the server you are on except all which purges all data");
+		wowroster:Print(" /rpurge all - purges all data from the sv file");
+		wowroster:Print(" /rpurge char CHARNAME - purges that char from your server sv file");
+		wowroster:Print(" /rpurge server - purges all data for your server");
+		
+		return;
+	end
+		
+	-- Print Help
+	if ( msg[1] == "all" ) then
+		cpProfile=nil;
+		wowroster:Print("All Data Purged!");--cpProfile=nil;
+		return;
+	end
+	if ( msg[1] == "char" ) then
+		if(cpProfile[server] and cpProfile[server]["Character"] and cpProfile[server]["Character"][msg[2]]) then
+			cpProfile[server]["Character"][msg[2]]=nil;
+			isPurged=true;
+			wowroster:Print("Player "..msg[2[.."@"..server.." purged");
+		end
+		return;
+	end
+	if ( msg[1] == "server" ) then
+		if(cpPofile[stat["_server"]] and cpProfile[stat["_server"]]["Character"]) then
+			cpProfile[stat["_server"]]["Character"]=nil;
+			isPurged=true;
+			wowroster:Print("Server "..stat["_server"].." purged");
+		end
+		return;
+	end
+	
+end
+wowroster.Str2Ary = function(str)
+	local tab={};
+	str = strtrim(str);
+	while( str and str ~="" ) do
+		local word,string;
+		if( strfind(str, '^|c.+|r') ) then
+			_,_,word,string = strfind( str, '^(|c.+|r)(.*)');
+		elseif( strfind(str, '^"[^"]+"') ) then
+			_,_,word,string = strfind( str, '^"([^"]+)"(.*)');
+		else
+			_,_,word,string = strfind( str, '^(%S+)(.*)');
+		end
+		if( word ) then
+			table.insert(tab,word);
+		end
+		if( string ) then
+			string=strtrim(string);
+		end
+		str = string;
+	end
+	return tab;
+end
 function wowroster:OnDisable()
 	self.prefs = wowrpref;
 	LibStub("AceDB-3.0"):New("wowrpref",self.prefs)
@@ -1552,7 +1617,7 @@ function wowroster:TRADE_SKILL_SHOW()
 						if(reagentName) then
 							
 						itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, _,_, itemTexture, itemSellPrice = GetItemInfo(reagentName);
-							reagentID  = wowroster.GetItemID( reagentLink )
+							reagentID  = wowroster.GetItemId( reagentLink )
 							GameTooltip:SetTradeSkillItem(idx,j) --SetTradeSkillItem(idx)
 							tooltip = wowroster.scantooltip2()
 							itexture = wowroster.scanIcon(itemTexture)
@@ -2251,6 +2316,18 @@ wowroster.scanIcon = function(str)
 	return table.remove({ strsplit("\\", str) });
 end
 
+wowroster.GetItemId = function(itemStr)
+	if(itemStr) then 
+		local _,_,itemid,_,gid1,gid2,gid3,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
+			if( itemid ~= 0) then
+			--wowroster:Print("has gem "..gid1.." "..gid2.." "..gid3.."");
+				return itemid;
+			else
+				return nil;
+			end
+		end
+		return nil;
+	end	
 wowroster.scanColor = function(str)
 	if(not str) then return nil; end
 	local _,_,c = string.find(str,"%x%x(%x%x%x%x%x%x)");
