@@ -1627,11 +1627,11 @@ function wowroster:TRADE_SKILL_SHOW()
 						if(reagentName) then
 							
 						itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, _,_, itemTexture, itemSellPrice = GetItemInfo(reagentName);
-							reagentID  = wowroster.GetItemId( reagentLink )
+							reagentID  = wowroster.GetReagentId( reagentLink )
 							GameTooltip:SetTradeSkillItem(idx,j) --SetTradeSkillItem(idx)
 							tooltip = wowroster.scantooltip2()
-							itexture = wowroster.scanIcon(itemTexture)
-							table.insert(reagentlist,{name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Count=reagentCount,link=reagentLink});
+							itexture = wowroster.scanIcon(reagentTexture)
+							table.insert(reagentlist,{Name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Count=reagentCount,link=reagentLink});
 							reagentc = reagentc+1;
 						end
 					end
@@ -1643,9 +1643,9 @@ function wowroster:TRADE_SKILL_SHOW()
 
 					f:SetOwner(UIParent, 'ANCHOR_NONE')  
 					GameTooltip:SetTradeSkillItem(idx) --SetTradeSkillItem(idx)
-					tooltip = wowroster.scantooltip2()
+					tooltip1 = wowroster.scantooltip2()
 					f:Hide()
-
+					tooltip = tooltip1 or "";
 					local Icon = GetTradeSkillIcon(idx) or "";
 					skills[skillLineName][skillHeader][skillName]={
 						RecipeID  = wowroster.GetRecipeId( GetTradeSkillRecipeLink(idx) ),
@@ -1701,52 +1701,18 @@ local isHTML = true
 	end
 	return "";
 end
-wowroster.reagents = function(numReagents,skillIndex,reagentIndex)
-
-	local reagents = {};			
-	for reagentIndex = 1, numReagents do
-		local reagentName, _, reagentCount = GetTradeSkillReagentInfo(skillIndex, reagentIndex);
-		if (reagentName) then
-			itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount,
-itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(reagentName);
-			itemName = reagentName;
-			reagents[reagentName] = {
-				name = itemName,
-				count = reagentCount,
-				texture = itemTexture,
-				reagentID  = wowroster.GetItemID( itemLink ),
-			};
+wowroster.GetReagentId = function(itemStr)
+	if(itemStr) then 
+		local _,_,itemid,_,_,_,_,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
+			if( itemid ~= 0) then
+			--wowroster:Print("has gem "..gid1.." "..gid2.." "..gid3.."");
+				return itemid;
+			else
+				return nil;
+			end
 		end
-		if(not reagentName) then
-		reagents = wowroster.reagents2(skillIndex,reagentIndex);
-			return;
-		end
-	end
-	return reagents;
-end
-
-wowroster.reagents2 = function(skillIndex,reagentIndex)
-
-	local reagents = {};
-	if (skillIndex and reagentIndex) then	
-	
-		local reagentName, _, reagentCount = GetTradeSkillReagentInfo(skillIndex, reagentIndex);
-		local link = GetTradeSkillReagentItemLink(skillIndex, reagentIndex);
-		if(not reagentName) then
-			wowroster.reagents2(skillIndex, reagentIndex);
-			return;
-		end
-		if (reagentName) then
-		reagentName = {
-			name = reagentName,
-			count = reagentCount,
-			reagentID  = wowroster.GetItemID( link ),
-		};
-		end
-	end
-	return reagents;
-end
-
+		return nil;
+	end	
 
 wowroster.GetRecipeId = function(recipeStr)
 	local id;
