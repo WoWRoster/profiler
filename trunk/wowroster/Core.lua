@@ -133,7 +133,7 @@ function wowroster:OnEnable()
 	wowroster:Print("Hello, WoW Roster Profiler Enabled");
 	wowroster:Print("Hello, WoW Roster Profiler Loaded go to the addons tab in the Interface config section of wow to configure the addon ");
 
-	wowroster:RegisterChatCommand("rpurge", "WOWRP_ChatCommandHandler");
+	wowroster:RegisterChatCommand("wrcp", "WOWRP_ChatCommandHandler");
 
 	
 	
@@ -144,37 +144,47 @@ function wowroster:WOWRP_ChatCommandHandler(argline)
 	local msg = wowroster.Str2Ary(argline);
 --wowroster:Print("purge "..msg[1].." "..msg[2].."");
 local server = GetRealmName();	
-	if ( msg[1] == "" ) then
+	if ( msg[1] == "" or msg[1] == "help") then
 		wowroster:Print(" the followinga re the purge commands for the addon NOTE these only work on the server you are on except all which purges all data");
-		wowroster:Print(" /rpurge all - purges all data from the sv file");
-		wowroster:Print(" /rpurge char CHARNAME - purges that char from your server sv file");
-		wowroster:Print(" /rpurge server - purges all data for your server");
+		wowroster:Print(" /wrcp purge all - purges all data from the sv file");
+		wowroster:Print(" /wrcp purge char CHARNAME - purges that char from your server sv file");
+		wowroster:Print(" /wrcp purge server - purges all data for your server");
 		
 		return;
 	end
-		
-	-- Print Help
-	if ( msg[1] == "all" ) then
-		cpProfile=nil;
-		wowroster:Print("All Data Purged!");--cpProfile=nil;
-		return;
-	end
-	if ( msg[1] == "char" ) then
-		if(cpProfile[server] and cpProfile[server]["Character"] and cpProfile[server]["Character"][msg[2]]) then
-			cpProfile[server]["Character"][msg[2]]=nil;
-			isPurged=true;
-			wowroster:Print("Player "..msg[2].."@"..server.." purged");
-		end
-		return;
-	end
-	if ( msg[1] == "server" ) then
-		if(cpPofile[stat["_server"]] and cpProfile[stat["_server"]]["Character"]) then
-			cpProfile[stat["_server"]]["Character"]=nil;
-			isPurged=true;
-			wowroster:Print("Server "..stat["_server"].." purged");
-		end
-		return;
-	end
+			if (msg[1] == "purge") then
+			
+				if ( msg[2] == "all" ) then
+					cpProfile=nil;
+					wowroster:Print("All Data Purged!");--cpProfile=nil;
+					return;
+				end
+				if ( msg[2] == "char" ) then
+					if(cpProfile[server] and cpProfile[server]["Character"] and cpProfile[server]["Character"][msg[3]]) then
+						cpProfile[server]["Character"][msg[3]]=nil;
+						isPurged=true;
+						wowroster:Print("Player "..msg[3].."@"..server.." purged");
+					end
+					return;
+				end
+				if ( msg[2] == "server" ) then
+					if(cpPofile[stat["_server"]] and cpProfile[stat["_server"]]["Character"]) then
+						cpProfile[stat["_server"]]["Character"]=nil;
+						isPurged=true;
+						wowroster:Print("Server "..stat["_server"].." purged");
+					end
+					return;
+				end
+				if ( msg[2] == "guild" ) then
+					profile=msg[3] or GetGuildInfo("player") or "";
+					if(myProfile[server] and myProfile[server]["Guild"] and myProfile[server]["Guild"][profile]) then
+						cpProfile[server]["Guild"][profile]=nil;
+						isPurged=true;
+						wowroster:Print("Guild "..profile.."@"..stat["_server"].." purged");
+					end
+					return;
+				end
+			end
 	
 end
 wowroster.Str2Ary = function(str)
