@@ -1290,6 +1290,7 @@ function wowroster:GetStats(structStats,unit)
 		local damagePerSecond = (max(fullDamage,1) / speed);
 	
 		structAttack["Melee"]={};
+		structAttack["Melee"]["Expertise"]=GetExpertise();
 		structAttack["Melee"]["MainHand"]={};
 		structAttack["Melee"]["MainHand"]["AttackSpeed"]=wowroster.round(speed,2);
 		structAttack["Melee"]["MainHand"]["AttackDPS"]=wowroster.Percent(damagePerSecond);--wowroster.round(stat.dps,1);
