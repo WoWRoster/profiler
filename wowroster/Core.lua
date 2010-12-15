@@ -1548,26 +1548,33 @@ function wowroster:SKILLS()
 	skill = {};
 	skill["Secondary Skills"]={};
 	skill["Professions"]={};
-	
-	local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(prof1);
-	skill["Professions"][name] = skillLevel..":"..maxSkillLevel;
+	if prof1 then
+		local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(prof1);
+		skill["Professions"][name] = skillLevel..":"..maxSkillLevel;
+	end
+	if prof2 then
 	local name2, icon2, skillLevel2, maxSkillLevel2, numAbilities2, spelloffset2, skillLine2, skillModifier2 = GetProfessionInfo(prof2);
 	skill["Professions"][name2] = skillLevel2..":"..maxSkillLevel2;
 	skill["Professions"]["Order"] = "1";
+	end
+	if a then
 	local namea, icona, skillLevela, maxSkillLevela, numAbilitiesa, spelloffseta, skillLinea, skillModifiera = GetProfessionInfo(a);
 	skill["Secondary Skills"][namea] = skillLevela..":"..maxSkillLevela;
 	--skill["Secondary Skills"][namea]["test"] = skillLinea;
-	
+		end
+	if b then
 	local nameb, iconb, skillLevelb, maxSkillLevelb, numAbilitiesb, spelloffsetb, skillLineb, skillModifierb = GetProfessionInfo(b);
 	skill["Secondary Skills"][nameb] = skillLevelb..":"..maxSkillLevelb;
-	
+	end
+	if c then
 	local namec, iconc, skillLevelc, maxSkillLevelc, numAbilitiesc, spelloffsetc, skillLinec, skillModifierc = GetProfessionInfo(c);
 	skill["Secondary Skills"][namec] = skillLevelc..":"..maxSkillLevelc;
-	
+	end
+	if d then
 	local named, icond, skillLeveld, maxSkillLeveld, numAbilitiesd, spelloffsetd, skillLined, skillModifierd = GetProfessionInfo(d);
 	skill["Secondary Skills"][named] = skillLeveld..":"..maxSkillLeveld;
 	skill["Secondary Skills"]["Order"] = "2";
-	
+	end
 	wowroster.db["Skills"] = skill;
 	
 end
@@ -1648,15 +1655,15 @@ function wowroster:TRADE_SKILL_SHOW()
 					tooltip = tooltip1 or "";
 					local Icon = GetTradeSkillIcon(idx) or "";
 					skills[skillLineName][skillHeader][skillName]={
-						RecipeID  = wowroster.GetRecipeId( GetTradeSkillRecipeLink(idx) ),
+						RecipeID  = wowroster.GetRecipeId( GetTradeSkillRecipeLink(idx) ) or "",
 						Difficulty= skillType,
-						numMade = GetTradeSkillNumMade(idx),
-						itemLink= GetTradeSkillItemLink(idx),
+						numMade = GetTradeSkillNumMade(idx) or "",
+						itemLink= GetTradeSkillItemLink(idx) or "",
 						Reagentsnum = numReagents,
 						Reagents = reagentlist,
 						Icon = wowroster.scanIcon(Icon),
-						desc  = description,
-						Tooltip	= tooltip};
+						desc  = description or "",
+						Tooltip	= tooltip,};
 						
 					cnt = cnt+1;
 
@@ -2030,23 +2037,9 @@ end
 
 --[ItemHasGem] itemStr
 wowroster.ItemHasGem = function(itemStr)
---[[	local gid1,gid2,gid3;
-	if(itemStr) then _,_,gid1,gid2,gid3,_,_,_,_=string.find(itemStr,"|Hitem:%d+:[-%d]+:([-%d]+):([-%d]+):([-%d]+):[-%d]+:[-%d]+:[-%d]+:[%d]+|h");
-		if( gid1 and gid2 and gid3 and gid1+gid2+gid3 ~= 0) then
-			wowroster:Print("has gem "..itemStr.."");
-			return true;
-			
 
-		end
-	end
-	]]--
-	--wowroster:Print("checking "..itemStr.."");
 	local gem1name, gem1Link = GetItemGem(itemStr, 1)
-	--if (gem1name) then
-	
-	
-																--47595:3832:3733:3537:3531:0:0:1597318272:80:0
-	wowroster:Print("lk "..itemStr.."");
+
 	if(itemStr) then 
 	local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
 		if( gid1 and gid2 and gid3 and gid1+gid2+gid3 ~= 0) then
