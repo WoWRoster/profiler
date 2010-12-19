@@ -1635,11 +1635,13 @@ function wowroster:TRADE_SKILL_SHOW()
 						if(reagentName) then
 							
 						itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, _,_, itemTexture, itemSellPrice = GetItemInfo(reagentName);
-							reagentID  = wowroster.GetReagentId( reagentLink )
-							GameTooltip:SetTradeSkillItem(idx,j) --SetTradeSkillItem(idx)
-							tooltip = wowroster.scantooltip2()
-							itexture = wowroster.scanIcon(reagentTexture)
-							table.insert(reagentlist,{Name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Count=reagentCount,link=reagentLink});
+						local ritemColor,_,_,_=wowroster.GetItemInfo(reagentLink);
+							reagentID  = wowroster.GetReagentId( reagentLink );
+							GameTooltip:SetTradeSkillItem(idx,j); --SetTradeSkillItem(idx)
+							tooltip = wowroster.scantooltip2();
+							color = ritemColor;
+							itexture = wowroster.scanIcon(reagentTexture);
+							table.insert(reagentlist,{Name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Color=color,Count=reagentCount,link=reagentLink});
 							reagentc = reagentc+1;
 						end
 					end
@@ -1654,10 +1656,12 @@ function wowroster:TRADE_SKILL_SHOW()
 					tooltip1 = wowroster.scantooltip2()
 					f:Hide()
 					tooltip = tooltip1 or "";
+					local temColor,_,itemID,itemName=wowroster.GetItemInfo(GetTradeSkillItemLink(idx));
 					local Icon = GetTradeSkillIcon(idx) or "";
 					skills[skillLineName][skillHeader][skillName]={
 						RecipeID  = wowroster.GetRecipeId( GetTradeSkillRecipeLink(idx) ) or "",
 						Difficulty= skillType,
+						Color = temcolor or "",
 						numMade = GetTradeSkillNumMade(idx) or "",
 						itemLink= GetTradeSkillItemLink(idx) or "",
 						Reagentsnum = numReagents,
