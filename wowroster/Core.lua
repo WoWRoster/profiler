@@ -1639,7 +1639,7 @@ function wowroster:TRADE_SKILL_SHOW()
 							reagentID  = wowroster.GetReagentId( reagentLink );
 							GameTooltip:SetTradeSkillItem(idx,j); --SetTradeSkillItem(idx)
 							tooltip = wowroster.scantooltip2();
-							color = ritemColor;
+							color = wowroster.scanColor(ritemColor);
 							itexture = wowroster.scanIcon(reagentTexture);
 							table.insert(reagentlist,{Name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Color=color,Count=reagentCount,link=reagentLink});
 							reagentc = reagentc+1;
@@ -1660,13 +1660,13 @@ function wowroster:TRADE_SKILL_SHOW()
 					local Icon = GetTradeSkillIcon(idx) or "";
 					skills[skillLineName][skillHeader][skillName]={
 						RecipeID  = wowroster.GetRecipeId( GetTradeSkillRecipeLink(idx) ) or "",
-						Difficulty= skillType,
-						Color = temcolor or "",
+						Difficulty= skillType or "",
+						Color = wowroster.scanColor(temColor) or "",
 						numMade = GetTradeSkillNumMade(idx) or "",
 						itemLink= GetTradeSkillItemLink(idx) or "",
-						Reagentsnum = numReagents,
+						Reagentsnum = numReagents or "0",
 						Reagents = reagentlist,
-						Icon = wowroster.scanIcon(Icon),
+						Icon = wowroster.scanIcon(Icon) or "",
 						desc  = description or "",
 						Tooltip	= tooltip,};
 						
