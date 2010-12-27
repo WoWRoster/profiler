@@ -4,7 +4,9 @@ local state = {};
 local acd = LibStub("AceConfigDialog-3.0")
 local ac = LibStub("AceConfig-3.0")
 local f = CreateFrame('GameTooltip', 'MyTooltip', UIParent, 'GameTooltipTemplate') 
-
+--local gnews={};
+--local gnews["0"]="Guild Achievements";
+local gnews = {"Player Achievements","Instances","Item Loots","Items Crafted","Items Purchesed","Guild Level","Player Level","opps1","opps2"};gnews[0]="Guild Achievements";gnews["-1"]="Guild Achievements";
 if(not wowroster) then wowroster={}; end
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
@@ -35,7 +37,7 @@ local function findPanel(name, parent)
 end
 
 function wowrostergp:OnEnable()
-	--self:RegisterEvent("GUILDBANKFRAME_OPENED")
+	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	--self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	self:RegisterEvent("ADDON_LOADED")
 	wowrostergp:Print("WoWR-GP Enabled!");
@@ -94,8 +96,10 @@ end
 function wowrostergp:gpexport()
 	wowrostergp:GetGuildInfo()
 	if(wowrpref["guild"]["trades"]) then
-		wowrostergp:ScanProfessions()
+		wowrostergp:ScanProfessions();
 	end
+	wowrostergp:Scannews();
+	wowrostergp:ScanGuildControl();
 	msg = stat["_guild"];
 	wowrostergp:Print(msg);
 	msg = "Vault:";
@@ -137,7 +141,7 @@ function wowrostergp:InitProfile()
 	self.sv = cpProfile[stat["_server"]]["Guild"][stat["_guild"]];
 	local currentXP, nextLevelXP, dailyXP, maxDailyXP = UnitGetGuildXP("player");
 	if( self.sv ) then
-		self.sv["GPversion"]	= "1.0";
+		self.sv["GPversion"]	= "1.0.0";
 		self.sv["CPprovider"]	= "wowr";
 		self.sv["DBversion"]	= "3.1";
 		self.sv["GuildName"]	= stat["_guild"];
@@ -253,7 +257,7 @@ function wowrostergp:ScanGuildMembers(numMembers)
 				if(not online) then
 					lastonline = strjoin(":",GetGuildRosterLastOnline(idx));
 				end
-
+				
 				guildMemberTemp[name] = {
 					Name	= name,
 					Rank	= rankIndex,
@@ -272,6 +276,16 @@ function wowrostergp:ScanGuildMembers(numMembers)
 					AchRank = achievementRank,
 					Mobile = isMobile,
 				};
+				local weeklyXP, totalXP, weeklyRank, totalRank = GetGuildRosterContribution(idx);
+				if weeklyXP then
+					guildMemberTemp[name]["XP"] = {};
+						guildMemberTemp[name]["XP"] = {
+								WeeklyXP = weeklyXP,
+								TotalXP = totalXP,
+								WeeklyRank = weeklyRank,
+								TotalRank = totalRank,
+							};
+				end
 				cnt=cnt+1;
 			end
 		end
@@ -288,6 +302,68 @@ function wowrostergp:ScanGuildMembers(numMembers)
 		end
 	end
 end
+--[[
+local NEWS_MOTD = -1;				-- pseudo category
+local NEWS_GUILD_ACHIEVEMENT = 0;
+local NEWS_PLAYER_ACHIEVEMENT = 1;
+local NEWS_DUNGEON_ENCOUNTER = 2;
+local NEWS_ITEM_LOOTED = 3;
+local NEWS_ITEM_CRAFTED = 4;
+local NEWS_ITEM_PURCHASED = 5;
+local NEWS_GUILD_LEVEL = 6;
+local NEWS_GUILD_CREATE = 7;
+]]--
+
+function wowrostergp:Scannews()
+
+	local numGuildNews = GetNumGuildNews();
+	wowrostergp.sv["News"]={};
+	structnews = {};
+	for index=1, numGuildNews do
+	
+		local isSticky, isHeader, newsType, text1, text2, id, data, data2, weekday, day, month, year = GetGuildNewsInfo(index);
+
+			NewsType = gnews[newsType];
+			order = day.."/"..month.."/"..year or "";
+
+			if( not structnews[NewsType] ) then
+				structnews[NewsType]={};
+			end
+			
+			if( not structnews[NewsType][index] ) then
+				structnews[NewsType][index]={};
+			end
+					
+			if ( weekday == 0 ) then
+				weekday = 7;
+			end
+			structnews[NewsType][index] = {
+				Type		= NewsType,
+				Typpe		= newsType,
+				isheader	= isHeader,
+				DATE		= order,
+				DATEday 		= day or "",
+				DATEmonth 		= month or "",
+				DATEyear 		= year or "",
+				ID			= id,
+				Data 		= data or "",
+				Data2 		= data2 or "",
+				Member 		= text1 or "",
+				Achievement	= text2 or "",
+				Issticky 	= isSticky or "",
+			}
+			
+		--end
+		
+		
+	end
+
+	wowrostergp.sv["News"] = structnews;
+
+
+
+end
+
 
 function wowrostergp:ScanProfessions()
 	local numTradeSkill = GetNumGuildTradeSkill();
@@ -314,9 +390,61 @@ function wowrostergp:ScanProfessions()
 	wowrostergp.sv["Trades"] = structtrade;
 end
 
+
+
+function wowrostergp:ScanGuildControl()
+	wowrostergp.sv["Control"]={};
+--	for idx=1,MAX_GUILDCONTROL_OPTIONS do
+--	MAX_GUILDCONTROL_OPTIONS variable is wrong
+	for idx=1,GuildControlGetRankFlagsNum(GuildControlGetRankFlags()) do
+		wowrostergp.sv["Control"][idx]=getglobal("GUILDCONTROL_OPTION"..idx);
+	end
+	wowrostergp.sv["Ranks"]={};
+	for idx=1,GuildControlGetNumRanks() do
+		GuildControlSetRank(idx);
+		wowrostergp.sv["Ranks"][idx-1]={
+			Title=GuildControlGetRankName(idx),
+			Control=self:GuildControlGetRankFlagsStr(GuildControlGetRankFlags()),
+			--Withdraw= GetGuildBankTabPermissions(currentTab) (),
+		};
+		local numTabs = GetNumGuildBankTabs();
+		for i=1, MAX_GUILDBANK_TABS do
+			if ( i <= numTabs ) then
+				local viewTab, canDeposit, updatetext, numWithdrawals = GetGuildBankTabPermissions(i);
+				viewTab = viewTab or 0;
+				canDeposit = canDeposit or 0;
+				numWithdrawals = numWithdrawals or 0;
+				wowrostergp.sv["Ranks"][idx-1]["Tab"..i]=strjoin(":",viewTab, canDeposit, numWithdrawals);
+			else
+				wowrostergp.sv["Ranks"][idx-1]["Tab"..i]=nil;
+			end
+		end
+	end
+end
+function GuildControlGetRankFlagsNum(...)
+	return select("#",...);
+end
+function  wowrostergp:GuildControlGetRankFlagsStr(...)
+	local flags={};
+	for i=1,select("#",...) do
+		local v=select(i,...);
+		v = v or 0;
+		table.insert(flags,v);
+	end
+	return(table.concat(flags,":"));
+end
+function  wowrostergp:GuildVaultFlags(...)
+	local str = "";
+	for i=1, MAX_GUILDBANK_TABS do
+		str = str ..strjoin(":",GetGuildBankTabPermissions(i))
+	end
+end
+
+
+
 function wowrostergp:GUILDBANKBAGSLOTS_CHANGED()
 	stat["Vaultavl"] = false;
-	wowrostergp:ScanGuildBank()
+	wowrostergp:ScanGuildBank();
 end
 
 function wowrostergp.ScanGuildBankQueue()
