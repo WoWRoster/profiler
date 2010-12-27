@@ -630,7 +630,7 @@ function wowroster:InitProfile()
 	self.db = cpProfile[self.state["_server"]]["Character"][self.state["_player"]];
 
 	if( self.db ) then
-		self.db["CPversion"]	= "1.0";
+		self.db["CPversion"]	= "1.0.0";
 		self.db["CPprovider"]	= "wowr";
 		self.db["DBversion"]	= "3.1";
 		self.db["Name"]			= self.state["_player"];
@@ -1580,9 +1580,24 @@ function wowroster:SKILLS()
 	
 end
 
+function wowroster:SaveHeaders()
+	local headerCount = 0		-- use a counter to avoid being bound to header names, which might not be unique.
+	
+	for i = GetNumTradeSkills(), 1, -1 do		-- 1st pass, expand all categories
+		local _, skillType, _, isExpanded  = GetTradeSkillInfo(i)
+		 if (skillType == "header") then
+			headerCount = headerCount + 1
+			if not isExpanded then
+				ExpandTradeSkillSubClass(i)
+				headersState[headerCount] = true
+			end
+		end
+	end
+end
+
 function wowroster:TRADE_SKILL_SHOW()
 --wowroster.db["Professions"] = {};
-    local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions();
+--    local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions();
 	local skillLineName,skillLineRank,skillLineMaxRank=GetTradeSkillLine();
 	--local skills = wowroster.db["Professions"];
 	local cnt = 0;
@@ -1593,12 +1608,7 @@ function wowroster:TRADE_SKILL_SHOW()
 	if ( not wowroster.db["Professions"] ) then
 		wowroster.db["Professions"]={};
 	end
-	--[[
-	if ( not wowroster.db["timestamp"]["Professions"] ) then
-		wowroster.db["timestamp"]["Professions"]={};
-	end
-]]--
-	--wowroster.db["timestamp"]["Professions"]={};
+
 	local skills=wowroster.db["Professions"];
 	stat["Professions"][skillLineName]["ct"] = 0;
 	stat["Professions"][skillLineName]["errors"] = 0;
@@ -1619,7 +1629,7 @@ function wowroster:TRADE_SKILL_SHOW()
 					if( not skills[skillLineName][skillHeader] ) then
 						skills[skillLineName][skillHeader]={};
 					end
-					pdb = skills[skillLineName][skillHeader];
+					--pdb = skills[skillLineName][skillHeader];
 				elseif( skillHeader ) then
 					cooldown,numMade=nil,nil;
 					numReagents = GetTradeSkillNumReagents(idx);
@@ -1634,11 +1644,14 @@ function wowroster:TRADE_SKILL_SHOW()
 						local reagentLink = GetTradeSkillReagentItemLink(idx,j);
 						if(reagentName) then
 							
-						itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, _,_, itemTexture, itemSellPrice = GetItemInfo(reagentName);
-						local ritemColor,_,_,_=wowroster.GetItemInfo(reagentLink);
+							itemName, itemLink, itemRarity, itemLevel, _, itemType, itemSubType, _,_, itemTexture,_ = GetItemInfo(reagentName);
+							local ritemColor,_,_,_=wowroster.GetItemInfo(reagentLink);
+							
 							reagentID  = wowroster.GetReagentId( reagentLink );
+							GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')
 							GameTooltip:SetTradeSkillItem(idx,j); --SetTradeSkillItem(idx)
 							tooltip = wowroster.scantooltip2();
+							GameTooltip:Hide()
 							color = wowroster.scanColor(ritemColor);
 							itexture = wowroster.scanIcon(reagentTexture);
 							table.insert(reagentlist,{Name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Color=color,Count=reagentCount,link=reagentLink});
@@ -1651,10 +1664,10 @@ function wowroster:TRADE_SKILL_SHOW()
 						stat["Professions"][skillLineName]["errors"] = stat["Professions"][skillLineName]["errors"]+1;
 					end
 
-					f:SetOwner(UIParent, 'ANCHOR_NONE')  
+					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
 					GameTooltip:SetTradeSkillItem(idx) --SetTradeSkillItem(idx)
 					tooltip1 = wowroster.scantooltip2()
-					f:Hide()
+					GameTooltip:Hide()
 					tooltip = tooltip1 or "";
 					local temColor,_,itemID,itemName=wowroster.GetItemInfo(GetTradeSkillItemLink(idx));
 					local Icon = GetTradeSkillIcon(idx) or "";
@@ -1908,20 +1921,16 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 			itemName,itemColor=wowroster.GetItemInfoTT(self.tooltip);
 		end
 			if(bagid=="player") then
-			
 				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
 				GameTooltip:SetInventoryItem("player",slot);
 				tooltip = wowroster.scantooltip2();
 				wowroster.tooltip:Hide();
 				link = GetInventoryItemLink("player",slot);
-				
 			elseif(bagid==BANK_CONTAINER) then
-				
 				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
 				GameTooltip:SetInventoryItem("player",BankButtonIDToInvSlotID(slot));--SetBagItem(bagid,slot);
 				tooltip = wowroster.scantooltip2();
 				GameTooltip:Hide();
-				
 			elseif(bagid==KEYRING_CONTAINER) then
 				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
 				GameTooltip:SetInventoryItem("player",KeyRingButtonIDToInvSlotID(slot));
@@ -1951,16 +1960,12 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		
 		if( wowroster.ItemHasGem(itemID) ) then
 			
-
 				local gem1, gem2, gem3 = GetInventoryItemGems(slot);
 				local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemID,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
 				itemBlock["Gem"] = {};
-			
-					--wowroster:Print("gem "..gem1.." "..gem2.." "..gem3.."");
-				if (gid1 ~= '0') then
 
+				if (gid1 ~= '0') then
 					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem1);
-					--wowroster:Print("gem "..itemName.." "..gem1.." ");
 					
 					if (itemLink)then
 					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
@@ -1969,9 +1974,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 					GameTooltip:Hide();
 					else
 						tooltip = nil;
-					end
-					
-					
+					end				
 					itemBlock["Gem"][1]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
 						Name = itemName,
 						Item = gem1,
@@ -1984,10 +1987,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 				end
 				
 				if (gid2 ~= '0') then
-
 					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem2);
-					--wowroster:Print("gem "..itemName.." "..gem1.." ");
-					
 					if (itemLink)then
 					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
 					GameTooltip:SetHyperlink(itemLink);
@@ -1995,9 +1995,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 					GameTooltip:Hide();
 					else
 						tooltip = nil;
-					end
-					
-					
+					end				
 					itemBlock["Gem"][2]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
 						Name = itemName,
 						Item = gem2,
@@ -2011,9 +2009,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 				
 				if (gid3 ~= '0') then
 
-					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem3);
-					--wowroster:Print("gem "..itemName.." "..gem1.." ");
-					
+					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem3);					
 					if (itemLink)then
 					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
 					GameTooltip:SetHyperlink(itemLink);
@@ -2022,8 +2018,6 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 					else
 						tooltip = nil;
 					end
-					
-					
 					itemBlock["Gem"][3]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
 						Name = itemName,
 						Item = gem3,
@@ -2048,7 +2042,6 @@ wowroster.ItemHasGem = function(itemStr)
 	if(itemStr) then 
 	local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
 		if( gid1 and gid2 and gid3 and gid1+gid2+gid3 ~= 0) then
-			--wowroster:Print("has gem "..gid1.." "..gid2.." "..gid3.."");
 			return true;
 		else
 			return nil;
@@ -2128,7 +2121,6 @@ wowroster.GetSpellID = function(spellStr)
 	return tonumber(id);
 end
 
-
 --[[
 begin talent data 
 ]]--
@@ -2165,8 +2157,6 @@ function wowroster:GetTalents(unit)
 		state = "Talents";
 		
 	end
-	
-
 		local tabName,iconTexture,pointsSpent,background;
 		
 		local cnt=0;
@@ -2238,10 +2228,6 @@ function wowroster:GetTalents(unit)
 	end
 end
 
-
-
-
-
 --[GetItemInfo] itemStr
 wowroster.GetItemInfo = function(itemStr)
 	if(itemStr) then
@@ -2275,7 +2261,6 @@ wowroster.GetItemInfoTT = function(tooltip)
 	if(nTT) then r,g,b=ttText:GetTextColor(); cTT=string.format("ff%02x%02x%02x",r*256,g*256,b*256); end
 	return nTT,cTT;
 end
-
 
 wowroster.GetContainerNumSlots = function(bagID)
 	if(bagID==KEYRING_CONTAINER) then
@@ -2325,6 +2310,7 @@ function wowroster.qInsert(queue,tbl,pri)
 		table.insert(queue,pri,tbl);
 	end
 end
+
 function wowroster.qProcess(queue,e)
 	if(not queue or table.getn(queue) == 0) then return end;
 	if(not e) then return end;
