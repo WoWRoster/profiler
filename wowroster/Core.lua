@@ -114,6 +114,7 @@ function wowroster:OnEnable()
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
+	self:RegisterEvent("ARCHAEOLOGY_TOGGLE");
 	self.buttons = {}
 	
 	local button = CreateFrame("Button", "GuildProfilerButton", PaperDollFrame, "UIPanelButtonTemplate")
@@ -389,6 +390,10 @@ function wowroster:Show()
 end
 
 
+function wowroster:ARCHAEOLOGY_TOGGLE()
+			wowroster:ARCH_frame()
+		end
+		
 function wowroster:BANKFRAME_OPENED()
 			wowroster:GetBank();
 		end
@@ -1595,6 +1600,62 @@ function wowroster:SaveHeaders()
 	end
 end
 
+function wowroster:ARCH_frame()
+
+	if ( not wowroster.db["Archaeology"] ) then
+		wowroster.db["Archaeology"]={};
+	end
+	
+	local structArch=wowroster.db["Archaeology"];
+	
+	local numRaces = GetNumArchaeologyRaces();
+
+	for i=1,numRaces do
+		local name, description, rarity, icon, spellDescription, numSockets, bgTexture =  nil,nil,nil,nil,nil,nil,nil;
+
+		--	•SetSelectedArtifact
+		local RaceName, RaceCurrency, RaceTexture, RaceitemID	= GetArchaeologyRaceInfo(i);
+		--local name, description, rarity, icon, spellDescription, numSockets, bgTexture =  GetSelectedArtifactInfo();
+		--wowroster:Print(" Races "..RaceName.." ");
+		if( not structArch[RaceName] ) then
+			structArch[RaceName] = {};
+		end
+
+		
+		for artifactIndex=1,GetNumArtifactsByRace(i) do
+			Artifactlist={};
+			local Name,Description,Rarity,Icon,Description,keystoneCount,_,firstCompletionTime,completionCount=GetArtifactInfoByRace(i, artifactIndex);
+			SetSelectedArtifact(i, artifactIndex);--SetSelectedArtifact();
+			local name, description, rarity, icon, spellDescription, numSockets, bgTexture =  GetSelectedArtifactInfo();
+			
+			table.insert(Artifactlist,{
+				Name 			= Name,
+				Desc 			= Description,
+				Rarity 			= Rarity,
+				Icon 			= wowroster.scanIcon(Icon),
+				SpellDesc 		= spellDescription,
+				NumSockets 		= keystoneCount,
+				BGTexture 		= wowroster.scanIcon(bgTexture),
+			});
+		
+		end
+		
+		structArch[RaceName] = {
+			Name 			= RaceName,
+			Currency 		= RaceCurrency,
+			Texture 		= wowroster.scanIcon(RaceTexture),
+			RaceID			= RaceitemID,
+			NumArtifacts	= GetNumArtifactsByRace(i),
+			Artifacts 		= Artifactlist,
+		};
+	
+	end
+
+
+
+
+end
+
 function wowroster:TRADE_SKILL_SHOW()
 --wowroster.db["Professions"] = {};
 --    local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions();
@@ -1678,7 +1739,7 @@ function wowroster:TRADE_SKILL_SHOW()
 						numMade = GetTradeSkillNumMade(idx) or "",
 						itemLink= GetTradeSkillItemLink(idx) or "",
 						Reagentsnum = numReagents or "0",
-						Reagents = reagentlist,
+						Reagents = reagentlist or "",
 						Icon = wowroster.scanIcon(Icon) or "",
 						desc  = description or "",
 						Tooltip	= tooltip,};
