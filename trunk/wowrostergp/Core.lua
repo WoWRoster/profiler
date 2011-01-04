@@ -41,6 +41,7 @@ function wowrostergp:OnEnable()
 	--self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	self:RegisterEvent("ADDON_LOADED")
 	wowrostergp:Print("WoWR-GP Enabled!");
+	wowrostergp:InitState();
 end
 
 function wowrostergp:ADDON_LOADED(arg1,arg2)
@@ -74,7 +75,7 @@ function wowrostergp:OnInitialize()
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
-	wowrostergp:InitProfile()
+	--wowrostergp:InitProfile()
 end
 
 function wowrostergp:InitState()
