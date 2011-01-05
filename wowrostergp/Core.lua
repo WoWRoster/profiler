@@ -11,7 +11,7 @@ if(not wowroster) then wowroster={}; end
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
-
+wowrostergp.sv = {};
 local stat = {
 	_server=GetRealmName(),
 	_player=UnitName("player"),
@@ -66,6 +66,8 @@ function wowrostergp:ButtonHandler( )
 end
 
 function wowrostergp:OnDisable()
+	cpProfile = wowrostergp.sv;
+	LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
 	LibStub("AceDB-3.0"):New("cpProfile",self.sv)
 end
 
@@ -75,7 +77,7 @@ function wowrostergp:OnInitialize()
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
-	--wowrostergp:InitProfile()
+	wowrostergp:InitProfile()
 end
 
 function wowrostergp:InitState()
@@ -95,12 +97,13 @@ function wowrostergp:InitState()
 end
 
 function wowrostergp:gpexport()
-	wowrostergp:GetGuildInfo()
+	wowrostergp:GetGuildInfo();
+	wowrostergp:Scannews();
+	wowrostergp:ScanGuildControl();
 	if(wowrpref["guild"]["trades"]) then
 		wowrostergp:ScanProfessions();
 	end
-	wowrostergp:Scannews();
-	wowrostergp:ScanGuildControl();
+	
 	msg = stat["_guild"];
 	wowrostergp:Print(msg);
 	msg = "Vault:";
