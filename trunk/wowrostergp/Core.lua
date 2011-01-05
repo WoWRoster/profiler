@@ -196,6 +196,7 @@ function wowrostergp:GetGuildInfo()
 		stat["_guilded"]=false;
 		return;
 	end
+	stat["_guild"] = GetGuildInfo("player");
 	local numGuildMembers, onlineMembers = GetNumGuildMembers();
 
 	QueryGuildEventLog();
