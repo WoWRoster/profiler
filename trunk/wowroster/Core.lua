@@ -11,8 +11,14 @@ if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
 
+local scan_numtradeskills=0;
+local scan_nextskill=0;
+local scan_reagentcount=0;
+local scan_tradename=nil;
+local scan_cache=true;
+
 wowroster.class = {WARRIOR=1,PALADIN=2,HUNTER=3,ROGUE=4,PRIEST=5,DEATHKNIGHT=6,SHAMAN=7,MAGE=8,WARLOCK=9,DRUID=11};
-wowroster.race = {Human=1,Orc=2,Dwarf=3,NightElf=4,Scourge=5,Tauren=6,Gnome=7,Troll=8,BloodElf=10,Draenei=11};
+wowroster.race = {Human=1,Orc=2,Dwarf=3,NightElf=4,Scourge=5,Tauren=6,Gnome=7,Troll=8,BloodElf=10,Draenei=11,Worgen=22};
 wowroster.tooltip = "wowrcptooltip";
 --[UnitClass] arg1:unit
 wowroster.UnitSex = function(arg1)
@@ -355,7 +361,9 @@ function wowroster:Show()
 				end
 			wowroster:Print(msg);
 			msg="";
-				
+			
+		if (GetNumTalentGroups(false, "player") == 2) then
+			
 			msg = "DS Talents:";
 				tsort={};
 				table.foreach(stat["DSTalents"], function(k,v) table.insert(tsort,k) end );
@@ -369,6 +377,7 @@ function wowroster:Show()
 				end
 			wowroster:Print(msg);
 			msg="";
+		end
 --WotLK
 				if( GetNumCompanions ) then 
 			msg = "Companions:";
@@ -647,6 +656,7 @@ function wowroster:InitProfile()
 		self.db["FactionEn"],self.db["Faction"]=UnitFactionGroup("player");
 		self.db["HasRelicSlot"]	= UnitHasRelicSlot("player")==1 or false;
 		self.db["timestamp"] = {};
+		self.db["Cached"] = {};
 		self:UpdateDate();
 		self.state["_loaded"] = true;
 	end
@@ -1615,28 +1625,52 @@ function wowroster:ARCH_frame()
 
 		--	•SetSelectedArtifact
 		local RaceName, RaceCurrency, RaceTexture, RaceitemID	= GetArchaeologyRaceInfo(i);
-		--local name, description, rarity, icon, spellDescription, numSockets, bgTexture =  GetSelectedArtifactInfo();
+		local aname, adescription, ararity, aicon, aspellDescription, anumSockets, abgTexture =  GetSelectedArtifactInfo();
 		--wowroster:Print(" Races "..RaceName.." ");
 		if( not structArch[RaceName] ) then
 			structArch[RaceName] = {};
 		end
-
-		
+			
+			
+		Artifactlist={};
 		for artifactIndex=1,GetNumArtifactsByRace(i) do
-			Artifactlist={};
-			local Name,Description,Rarity,Icon,Description,keystoneCount,_,firstCompletionTime,completionCount=GetArtifactInfoByRace(i, artifactIndex);
+		local complete = nil;
+		local artifactName,artifactDesc,artifactRarity,artifactIcon,hoverDescription,keystoneCount,bgTexture,firstCompletionTime,completionCount=GetArtifactInfoByRace(i, artifactIndex);
 			SetSelectedArtifact(i, artifactIndex);--SetSelectedArtifact();
 			local name, description, rarity, icon, spellDescription, numSockets, bgTexture =  GetSelectedArtifactInfo();
 			
-			table.insert(Artifactlist,{
-				Name 			= Name,
-				Desc 			= Description,
-				Rarity 			= Rarity,
-				Icon 			= wowroster.scanIcon(Icon),
-				SpellDesc 		= spellDescription,
-				NumSockets 		= keystoneCount,
-				BGTexture 		= wowroster.scanIcon(bgTexture),
-			});
+			if (firstCompletionTime == 0) then
+			
+				ArtifactCurrent={};
+				table.insert(ArtifactCurrent,{
+					Name 			= artifactName,
+					Desc 			= artifactDesc,
+					hdesc			= hoverDescription,
+					Rarity 			= artifactRarity,
+					Count			= completionCount,
+					First			= firstCompletionTime,
+					Icon 			= wowroster.scanIcon(artifactIcon),
+					SpellDesc 		= spellDescription,
+					NumSockets 		= keystoneCount,
+					BGTexture 		= wowroster.scanIcon(bgTexture),
+				});
+				complete = artifactName;
+			end
+			
+			if (artifactName ~= complete) then
+				table.insert(Artifactlist,{
+					Name 			= artifactName,
+					Desc 			= artifactDesc,
+					hdesc			= hoverDescription,
+					Rarity 			= artifactRarity,
+					Count			= completionCount,
+					First			= firstCompletionTime,
+					Icon 			= wowroster.scanIcon(artifactIcon),
+					SpellDesc 		= spellDescription,
+					NumSockets 		= keystoneCount,
+					BGTexture 		= wowroster.scanIcon(bgTexture),
+				});
+			end
 		
 		end
 		
@@ -1646,6 +1680,7 @@ function wowroster:ARCH_frame()
 			Texture 		= wowroster.scanIcon(RaceTexture),
 			RaceID			= RaceitemID,
 			NumArtifacts	= GetNumArtifactsByRace(i),
+			Current			= ArtifactCurrent,
 			Artifacts 		= Artifactlist,
 		};
 	
@@ -1656,12 +1691,86 @@ function wowroster:ARCH_frame()
 
 end
 
+	--[[
+	
+		ok i got mad damn reagents are not working so heres what we are gona do....
+		this will cache everything to your local cach run each time you open to cache
+		new trades...
+	
+	]]--
+	
+function wowroster:ReagentCache()
+
+	if(scan_nextskill>=scan_numtradeskills) then
+		wowroster:FinalizeCacheScan();
+	else
+
+			local skillName, skillType, numAvailable, isExpanded = GetTradeSkillInfo(scan_nextskill);
+			if(skillName~=nil) then
+				if(skillType~="header") then
+					local numReagents = GetTradeSkillNumReagents(scan_nextskill);
+					local skillLink = GetTradeSkillItemLink(scan_nextskill);
+					local numMade = GetTradeSkillNumMade(scan_nextskill);
+					for j=1, numReagents, 1 do
+						local reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo(scan_nextskill, j);
+						local reagentLink = GetTradeSkillReagentItemLink(scan_nextskill,j);
+						scan_reagentcount=scan_reagentcount+1;
+					end
+				end
+			end
+		scan_nextskill=scan_nextskill+1;
+		wowroster:ReagentCache();
+	end
+	return;
+end
+
+function wowroster:BeginCache()
+
+wowroster:Print("Building Cache for "..scan_tradename.." ");
+
+	scan_reagentcount=0;
+	scan_nextskill=1;
+	wowroster:ReagentCache();
+	return;
+
+end
+
+function wowroster:FinalizeCacheScan()
+	wowroster.db["Cached"][scan_tradename]=true;
+	scan_tradename=nil;
+	wowroster:Print("Cached "..scan_reagentcount.." Reagents");
+	return
+
+end
+
+
 function wowroster:TRADE_SKILL_SHOW()
---wowroster.db["Professions"] = {};
---    local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions();
+
+	if(IsTradeSkillLinked() or IsTradeSkillGuild()) then
+		return nil;
+	end
 	local skillLineName,skillLineRank,skillLineMaxRank=GetTradeSkillLine();
-	--local skills = wowroster.db["Professions"];
+	local numTradeSkills = GetNumTradeSkills();
 	local cnt = 0;
+	scan_tradename = skillLineName;
+	
+	if (ATSW_IsEnabled()) then
+		wowroster:Print("ATSW Detected disabeling cache");
+		scan_cache = false;
+	end
+	if (not wowroster.db["Cached"][scan_tradename]) then
+		wowroster.db["Cached"][scan_tradename]=false;
+
+		-- build cache functions
+		scan_numtradeskills = numTradeSkills;
+		
+		if (scan_cache) then
+			wowroster:BeginCache();
+		end
+	end
+	
+
+	
 	stat["Professions"][skillLineName] = {};
 	if ( not wowroster.db["Professions"] ) then
 		wowroster.db["Professions"]={};
@@ -1675,12 +1784,11 @@ function wowroster:TRADE_SKILL_SHOW()
 	stat["Professions"][skillLineName]["errors"] = 0;
 	
 	if(not skills[skillLineName] ) then
-			skills[skillLineName]={};
-		end
+		skills[skillLineName]={};
+	end
 
-	--wowroster:Print("Scanning ".. skillLineName .."");
 	idxStart = 1;
-	local numTradeSkills = GetNumTradeSkills();
+	
 		for idx=idxStart,numTradeSkills do
 			skillName,skillType,_,_,serviceType=GetTradeSkillInfo(idx);
 			if( skillName and skillName~="" ) then
@@ -2133,6 +2241,7 @@ function wowroster:GetSpellBook()
 		local spellTabname,spellTabtexture,offset,numSpells=GetSpellTabInfo(spellTab);
 		local cnt=0;
 		if(not self.state["SpellBook"][spellTabname] or self.state["SpellBook"][spellTabname]~=numSpells) then
+			if (not spellTabtexture) then spellTabtexture = "achievement_guildperk_fasttrack_rank2"; end
 			structSpell[spellTabname]={
 					Icon	= wowroster.scanIcon(spellTabtexture),
 					Spells	= {},
@@ -2228,7 +2337,7 @@ function wowroster:GetTalents(unit)
 			if(not wowrpref["fixicon"]) then
 				background="Interface\\TalentFrame\\"..background; end
 				structTalent[tabName]={
-					Background=background,
+					Background=wowroster.scanIcon(background),
 					PointsSpent=pointsSpent,
 					Desc = desc,
 					Unlocked=isUnlocked,
@@ -2268,7 +2377,7 @@ function wowroster:GetTalents(unit)
 			if(not wowrpref["fixicon"]) then
 				background="Interface\\TalentFrame\\"..background; end
 				structTalents[tabName]={
-					Background=background,
+					Background=wowroster.scanIcon(background),
 					PointsSpent=pointsSpent,
 					Desc = desc,
 					Unlocked=isUnlocked,
