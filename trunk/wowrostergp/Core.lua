@@ -66,9 +66,10 @@ function wowrostergp:ButtonHandler( )
 end
 
 function wowrostergp:OnDisable()
-	cpProfile = wowrostergp.sv;
-	LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
+	--cpProfile = wowrostergp.sv;
+	--LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
 	LibStub("AceDB-3.0"):New("cpProfile",self.sv)
+--	LibStub("AceDB-3.0"):New("cpProfile",self.db)
 end
 
 function wowrostergp:OnInitialize()
@@ -97,6 +98,7 @@ function wowrostergp:InitState()
 end
 
 function wowrostergp:gpexport()
+	wowrostergp:ScanGuildMembers();
 	wowrostergp:GetGuildInfo();
 	wowrostergp:Scannews();
 	wowrostergp:ScanGuildControl();
@@ -226,7 +228,8 @@ end
 
 function wowrostergp:ScanGuildMembers(numMembers)
 	stat["_officer"] = CanViewOfficerNote();
-	if(numMembers > 0 and (stat["_guildNum"]~=numMembers)) then
+	--if(numMembers > 0 and (stat["_guildNum"]~=numMembers)) then
+	local numMembers, onlineMembers = GetNumGuildMembers();
 		local showOfflineTemp=GetGuildRosterShowOffline();
 		SetGuildRosterShowOffline(true);
 		local cnt = 0;
@@ -305,7 +308,7 @@ function wowrostergp:ScanGuildMembers(numMembers)
 			wowrostergp.sv["Members"]=guildMemberTemp;
 			--=--wowrostergp.sv["timestamp"]["Members"]=time();
 		end
-	end
+	--end
 end
 --[[
 local NEWS_MOTD = -1;				-- pseudo category
