@@ -41,7 +41,7 @@ function wowrostergp:OnEnable()
 	self:RegisterEvent("GUILDBANKFRAME_OPENED")
 	--self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	self:RegisterEvent("ADDON_LOADED")
-	wowrostergp:Print("WoWR-GP Enabled!");
+	wowrostergp:Print("WoWR-GP Enabled! 1.0.r62");
 	wowrostergp:InitState();
 end
 
