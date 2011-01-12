@@ -220,6 +220,9 @@ function wowroster:OnDisable()
 	self.prefs = wowrpref;
 	LibStub("AceDB-3.0"):New("wowrpref",self.prefs)
 	LibStub("AceDB-3.0"):New("cpProfile",self.db)
+	if (wowrostergp) then
+		LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
+	end
 end
 
 
