@@ -1757,7 +1757,7 @@ function wowroster:TRADE_SKILL_SHOW()
 	local cnt = 0;
 	scan_tradename = skillLineName;
 	
-	if (ATSW_IsEnabled()) then
+	if (IsAddOnLoaded("AdvancedTradeSkillWindow") ) then
 		wowroster:Print("ATSW Detected disabeling cache");
 		scan_cache = false;
 	end
