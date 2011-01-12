@@ -1,3 +1,4 @@
+--wowrostergp = LibStub("AceAddon-3.0"):NewAddon("wowrostergp", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 wowrostergp = LibStub("AceAddon-3.0"):NewAddon("wowrostergp", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 local acr = LibStub("AceConfigRegistry-3.0")
 local state = {};
@@ -11,7 +12,7 @@ if(not wowroster) then wowroster={}; end
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
-wowrostergp.sv = {};
+--wowrostergp.sv = {};
 local stat = {
 	_server=GetRealmName(),
 	_player=UnitName("player"),
@@ -147,6 +148,9 @@ function wowrostergp:InitProfile()
 	self.sv = cpProfile[stat["_server"]]["Guild"][stat["_guild"]];
 	local currentXP, nextLevelXP, dailyXP, maxDailyXP = UnitGetGuildXP("player");
 	if( self.sv ) then
+	
+		wowrostergp:Print("gp profile started");
+		
 		self.sv["GPversion"]	= "1.0.0";
 		self.sv["CPprovider"]	= "wowr";
 		self.sv["DBversion"]	= "3.1";
