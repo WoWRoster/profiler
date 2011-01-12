@@ -138,7 +138,7 @@ function wowroster:OnEnable()
 
 	self.buttons.save = button	
 	wowroster:Print("Hello, WoW Roster Profiler Enabled");
-	wowroster:Print("Hello, WoW Roster Profiler Loaded go to the addons tab in the Interface config section of wow to configure the addon ");
+	wowroster:Print("Hello, WoW Roster Profiler Loaded go to the addons tab in the Interface config section of wow to configure the addon 1.0.r62");
 
 	wowroster:RegisterChatCommand("wrcp", "WOWRP_ChatCommandHandler");
 
