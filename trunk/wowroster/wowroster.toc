@@ -6,6 +6,5 @@
 ## SavedVariables: wowrpref,cpProfile
 
 embeds.xml
-
 Core.lua
 rpgo.core.lua
