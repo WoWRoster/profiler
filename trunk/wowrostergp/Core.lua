@@ -13,6 +13,8 @@ if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
 --wowrostergp.sv = {};
+local Guild_name = nil;
+local Server = nil;
 local stat = {
 	_server=GetRealmName(),
 	_player=UnitName("player"),
@@ -43,6 +45,16 @@ function wowrostergp:OnEnable()
 	self:RegisterEvent("ADDON_LOADED")
 	wowrostergp:Print("WoWR-GP Enabled! 1.0.r62");
 	wowrostergp:InitState();
+	if ( not(Guild_name) ) then
+		Guild_name = GetGuildInfo("player");
+	end
+	if ( not(Guild_name) ) then
+		return stat["_loaded"];
+	end
+
+
+
+
 end
 
 function wowrostergp:ADDON_LOADED(arg1,arg2)
@@ -74,15 +86,19 @@ function wowrostergp:OnDisable()
 end
 
 function wowrostergp:OnInitialize()
-	wowrostergp:InitState()
+	wowrostergp:InitState();
 	self.sv = LibStub("AceDB-3.0"):New("cpProfile");
 	local function profileUpdate()
-		addon:SendMessage("scan updated")
+		addon:SendMessage("scan updated");
 	end
-	wowrostergp:InitProfile()
+	wowrostergp:InitProfile();
 end
 
 function wowrostergp:InitState()
+
+	Guild_name = GetGuildInfo("player");
+	Server = GetRealmName();
+
 	stat={
 		_server=GetRealmName(),
 		_player=UnitName("player"),
@@ -99,6 +115,7 @@ function wowrostergp:InitState()
 end
 
 function wowrostergp:gpexport()
+	wowrostergp:InitProfile();
 	wowrostergp:ScanGuildMembers();
 	wowrostergp:GetGuildInfo();
 	wowrostergp:Scannews();
@@ -127,25 +144,28 @@ function wowrostergp:gpexport()
 end
 
 function wowrostergp:InitProfile()
-	if( not IsInGuild() ) then
-		stat["_guilded"]=false;
-		stat["_loaded"] = false;
+
+	if ( not(Guild_name) ) then
+		Guild_name = GetGuildInfo("player");
+	end
+	if ( not(Guild_name) ) then
 		return stat["_loaded"];
 	end
+	
 	if( not cpProfile ) then
 		cpProfile={}; 
 	end
-	if( not cpProfile[stat["_server"]] ) then
-		cpProfile[stat["_server"]]={}; 
+	if( not cpProfile[Server] ) then
+		cpProfile[Server]={}; 
 	end
-	if( not cpProfile[stat["_server"]]["Guild"] ) then
-		cpProfile[stat["_server"]]["Guild"]={}; 
+	if( not cpProfile[Server]["Guild"] ) then
+		cpProfile[Server]["Guild"]={}; 
 	end
-	if( not cpProfile[stat["_server"]]["Guild"][stat["_guild"]] ) then
-		cpProfile[stat["_server"]]["Guild"][stat["_guild"]]={}; 
+	if( not cpProfile[Server]["Guild"][Guild_name] ) then
+		cpProfile[Server]["Guild"][Guild_name]={}; 
 	end
 
-	self.sv = cpProfile[stat["_server"]]["Guild"][stat["_guild"]];
+	self.sv = cpProfile[Server]["Guild"][Guild_name];
 	local currentXP, nextLevelXP, dailyXP, maxDailyXP = UnitGetGuildXP("player");
 	if( self.sv ) then
 	
@@ -154,8 +174,8 @@ function wowrostergp:InitProfile()
 		self.sv["GPversion"]	= "1.0.0";
 		self.sv["CPprovider"]	= "wowr";
 		self.sv["DBversion"]	= "3.1";
-		self.sv["GuildName"]	= stat["_guild"];
-		self.sv["Server"]		= stat["_server"];
+		self.sv["GuildName"]	= Guild_name;
+		self.sv["Server"]		= Server;
 		self.sv["Locale"]		= GetLocale();
 		self.sv["GuildXP"]		= currentXP..":"..nextLevelXP;
 		self.sv["GuildXPCap"]		= dailyXP..":"..maxDailyXP;
