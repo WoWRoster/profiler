@@ -5,7 +5,7 @@ local state = {};
 local acd = LibStub("AceConfigDialog-3.0")
 local ac = LibStub("AceConfig-3.0")
 local f = CreateFrame('GameTooltip', 'MyTooltip', UIParent, 'GameTooltipTemplate')
---local msg = "";
+
 
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
@@ -16,10 +16,13 @@ local scan_nextskill=0;
 local scan_reagentcount=0;
 local scan_tradename=nil;
 local scan_cache=true;
+--local icon;
 
 wowroster.class = {WARRIOR=1,PALADIN=2,HUNTER=3,ROGUE=4,PRIEST=5,DEATHKNIGHT=6,SHAMAN=7,MAGE=8,WARLOCK=9,DRUID=11};
 wowroster.race = {Human=1,Orc=2,Dwarf=3,NightElf=4,Scourge=5,Tauren=6,Gnome=7,Troll=8,BloodElf=10,Draenei=11,Worgen=22};
 wowroster.tooltip = "wowrcptooltip";
+
+
 --[UnitClass] arg1:unit
 wowroster.UnitSex = function(arg1)
 	local UnitSexLabel={UNKNOWN,MALE,FEMALE};
@@ -115,6 +118,8 @@ local function findPanel(name, parent)
 	end
 end
 
+
+
 function wowroster:OnEnable()
     -- Called when the addon is enabled\
 	self:RegisterEvent("TRADE_SKILL_SHOW")
@@ -141,10 +146,13 @@ function wowroster:OnEnable()
 	wowroster:Print("Hello, WoW Roster Profiler Loaded go to the addons tab in the Interface config section of wow to configure the addon 1.0.r62");
 
 	wowroster:RegisterChatCommand("wrcp", "WOWRP_ChatCommandHandler");
-
-	
+	wowroster:RegisterChatCommand("wr", "ChatCommand")
+	wowroster:RegisterChatCommand("wroptions", "ChatCommand")
+	--icon:Load();
 	
 end
+
+
 
 function wowroster:WOWRP_ChatCommandHandler(argline)
 --wowroster:Print("purge "..argline.." ");
@@ -220,7 +228,7 @@ function wowroster:OnDisable()
 	self.prefs = wowrpref;
 	LibStub("AceDB-3.0"):New("wowrpref",self.prefs)
 	LibStub("AceDB-3.0"):New("cpProfile",self.db)
-	if (wowrostergp) then
+	if ( IsAddOnLoaded("WoWRoster Guild Profiler") ) then
 		LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
 	end
 end
@@ -229,15 +237,22 @@ end
 function wowroster:OnInitialize()
 
 	self.prefs = LibStub("AceDB-3.0"):New("wowrpref")
+	
 	if(not wowrpref["enabled"]) then
 		wowrpref = defaults.profile;
 		self.prefs = wowrpref;
 		wowroster:Print("defaults loaded verson ".. self.prefs["ver"] .."")
 	end
 	self.db = LibStub("AceDB-3.0"):New("cpProfile");
+	self.profileOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
+	
+	--MinimapIcon:OnEnable();
+	
+	
 	self.tooltip = CreateFrame("GameTooltip",self.tooltip,UIParent,"GameTooltipTemplate");
 	self.tooltip:SetOwner(UIParent,"ANCHOR_NONE");
 	self.db.RegisterCallback(self, "OnProfileChanged", profileUpdate)
@@ -401,7 +416,6 @@ function wowroster:Show()
 				
 end
 
-
 function wowroster:ARCHAEOLOGY_TOGGLE()
 			wowroster:ARCH_frame()
 		end
@@ -547,17 +561,164 @@ function wowroster:makeconfig()
 				
 	},
 	}
+	local server = GetRealmName();
+	local acPurge = {
+		type = "group",
+		name = "purge profiles",
+		get = GetProperty, set = SetProperty, handler = wowroster,
+		
+		args = {
+			heading = {	
+				type = "description",
+				name = "Welcome to the WoWRoster CP config section",
+				fontSize = "medium",
+				order = 10,
+				width = "full",
+			},
+			
+			wipec = {
+				order = 100,
+				name = "Character Wipe",
+				desc = "select a toon to wipe",
+				type = "select",
+				values = function( info )
+				local t = { }
+					for k in pairs( cpProfile[GetRealmName()].Character ) do
+						t[k] = k
+					end
+				return t
+				end,
+				get = false, -- no default value
+				set = function( info, v )
+				print( "code to wipe data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
+				end,
+			},
+			wipeac = {
+				order = 100,
+				name = "Character Wipe (all)",
+				desc = "select a toon to wipe",
+				type = "select",
+				values = function( info )
+				local t = { }
+				
+					for k in pairs( cpProfile ) do
+						if (k ~= "profileKeys") then
+						
+							for c in pairs( cpProfile[k].Character ) do
+								print("    Char: "..c.." "..k);
+								t[c.."-"..k] = ""..c.." ("..k..")"
+							end
+						end
+					end
 
+				return t
+				end,
+				get = false, -- no default value
+				set = function( info, v )
+				print( "code to wipe data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
+				end,
+			},
+			wipes = {
+				order = 101,
+				name = "Server Wipe",
+				desc = "select a server to wipe",
+				type = "select",
+				values = function( info )
+				local t = { }
+					for k in pairs( cpProfile ) do
+						if (k ~= "profileKeys") then
+							t[k] = k
+						end
+					end
+				return t
+				end,
+				get = false, -- no default value
+				set = function( info, v )
+				print( "code to wipe data for cpProfiler.Character[" .. v .. "]" )
+				end,
+			},
+			wipeg = {
+				order = 102,
+				name = "Guild Wipe",
+				desc = "select a guild to wipe",
+				type = "select",
+				values = function( info )
+				local t = { }
+				if (cpProfile[GetRealmName()]["Guild"]) then
+					for k in pairs( cpProfile[GetRealmName()].Guild ) do
+						if (k ~= "profileKeys") then
+							t[k] = k
+						end
+					end
+				else
+					t=nil;
+				end
+				return t
+				end,
+				get = false, -- no default value
+				set = function( info, v )
+				print( "code to wipe data for cpProfiler.Character[" .. v .. "]" )
+				end,
+			},
+			--[[
+			wipeall = {
+				order = 104,
+				name = "Purge All",
+				desc = "Wipe all data stored in the global wowroster.lua file",
+				type = "execute",
+				confirm = "function",
+				--values = cpProfile = nil,
+				get = false, -- no default value
+				set = 
+				print( "code to wipe data for cpProfiler[" .. GetRealmName() .. "].Character[all]" ),				
+			
+			},]]--
+		},
+	}
+	
+	
+
+
+		
+--[[anchor = {
+					order	= 9,
+					type	= "select",
+					name	= L["Anchor"],
+					desc	= L["The corner of the Artifacts list that the frame will grow from."],
+					get	= function() return db.artifact.anchor end,
+					set	= function(_, value) 
+						db.artifact.anchor = value
+						Archy:SaveFramePosition(racesFrame)
+					end,
+					values	= frameAnchorOptions,
+				},]]--
+				
 	LibStub( 'AceConfig-3.0'):RegisterOptionsTable( "wowroster cp",acOptions)
 	
 	ac:RegisterOptionsTable("WoW Roster Cp", acOptions)
+	--ac:RegisterOptionsTable("Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(wowrpref.profiles))
+	
 	local mainOpts = acd:AddToBlizOptions("WoW Roster Cp", "WoWRoster Profiler")
+	
+	LibStub("AceConfig-3.0"):RegisterOptionsTable("Profiles2", acPurge)
+	self.profilesFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Profiles2", "Profiles", "WoWRoster Profiler")
+
+
 	mainOpts:HookScript("OnShow", function()
 		wowroster:Enable()
 		local p = findPanel("WoW Roster Cp")
 		if p and p.element.collapsed then OptionsListButtonToggle_OnClick(p.toggle) end
 	end)
 end
+
+function wowroster:ChatCommand(input)
+    if not input or input:trim() == "" then
+        InterfaceOptionsFrame_OpenToCategory("WoWRoster Profiler")
+    else
+        LibStub("AceConfigCmd-3.0").HandleCommand("WoW Roster Cp", "wr", "wroptions", input)
+    end
+end
+	
 
 function wowroster:InitState()
 	local _,class=UnitClass("player");
@@ -2591,3 +2752,5 @@ end
 function wowroster:Print(...)
 	print("|cff33ff99WoWR-P|r:", ...)
 end
+
+
