@@ -3,7 +3,7 @@
 ## Notes: Character data gathering utility for use with the WoWRoster.net profiler or for your own uses.
 ## Author: Ulminia (Joseph Foster)
 ## Version: 0.1
-## SavedVariables: wowrpref,cpProfile
+## SavedVariables: wowrpref,cpProfile,cpminimap
 
 embeds.xml
 Core.lua
