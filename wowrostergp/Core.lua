@@ -5,6 +5,44 @@ local state = {};
 local acd = LibStub("AceConfigDialog-3.0")
 local ac = LibStub("AceConfig-3.0")
 local f = CreateFrame('GameTooltip', 'MyTooltip', UIParent, 'GameTooltipTemplate') 
+
+local LDB = LibStub("LibDataBroker-1.1", true)
+local LDBIcon = LibStub("LibDBIcon-1.0", true)
+
+local L_BT_LEFT = "|cffffff00Click|r to save character";
+local L_BT_RIGHT = "|cffffff00Right-click|r to save guild";
+
+	
+local wowrgpLDB = LibStub("LibDataBroker-1.1"):NewDataObject("wowrostermm", {
+		type = "launcher",
+		label = "WoW Roster Profiler",
+		OnClick = function(_, msg)
+			if msg == "LeftButton" then
+				wowroster:export();
+			elseif msg == "RightButton" then
+				wowrostergp:gpexport();
+			end
+		end,
+		icon = "Interface\\Icons\\ACHIEVEMENT_GUILDPERK_EVERYONES A HERO_RANK2",
+		OnTooltipShow = function(tooltip)
+			if not tooltip or not tooltip.AddLine then return end
+			tooltip:AddLine("WoWRoster Profiler")
+			tooltip:AddLine(L_BT_LEFT)
+			tooltip:AddLine(L_BT_RIGHT)
+		end,
+	})
+	--[[
+	
+	"Bunnies!", {
+	type = "data source",
+	text = "Bunnies!",
+	icon = "Interface\\Icons\\ACHIEVEMENT_GUILDPERK_EVERYONES A HERO_RANK2",
+	OnClick = function() print("BUNNIES ARE TAKING OVER THE WORLD") end,
+})]]--
+local icon = LibStub("LibDBIcon-1.0")
+
+
+
 --local gnews={};
 --local gnews["0"]="Guild Achievements";
 local gnews = {"Player Achievements","Instances","Item Loots","Items Crafted","Items Purchesed","Guild Level","Player Level","opps1","opps2"};gnews[0]="Guild Achievements";gnews["-1"]="Guild Achievements";
@@ -28,7 +66,20 @@ local stat = {
 	Vault={},
 	Vaultavl=true,
 };
-
+local defaults = {
+	profile = {
+		tooltip = "enabled",
+		buttonlock = false,
+		outofrange = "button",
+		colors = { range = { r = 0.8, g = 0.1, b = 0.1 }, mana = { r = 0.5, g = 0.5, b = 1.0 } },
+		selfcastmodifier = true,
+		focuscastmodifier = true,
+		selfcastrightclick = false,
+		snapping = true,
+		blizzardVehicle = false,
+		minimapIcon = {},
+	}
+}
 local function findPanel(name, parent)
 	for i, button in next, InterfaceOptionsFrameAddOns.buttons do
 		if button.element then
@@ -40,30 +91,33 @@ local function findPanel(name, parent)
 end
 
 function wowrostergp:OnEnable()
-	self:RegisterEvent("GUILDBANKFRAME_OPENED")
+	self:RegisterEvent("GUILDBANKFRAME_OPENED");
 	--self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
-	self:RegisterEvent("ADDON_LOADED")
+	self:RegisterEvent("ADDON_LOADED");
+	--self:RegisterEvent("GuildFrame");
 	wowrostergp:Print("WoWR-GP Enabled! 1.0.r62");
 	wowrostergp:InitState();
-	if ( not(Guild_name) ) then
+--[[	if ( not(Guild_name) ) then
 		Guild_name = GetGuildInfo("player");
 	end
 	if ( not(Guild_name) ) then
 		return stat["_loaded"];
 	end
-
-
+]]--
+	--wowrostergp:ButtonHandler();
 
 
 end
+--/script DEFAULT_CHAT_FRAME:AddMessage( GetMouseFocus():GetName() );
 
 function wowrostergp:ADDON_LOADED(arg1,arg2)
+	wowrostergp:Print(" --: "..arg1.." - "..arg2.."");
 	if arg2 == "Blizzard_GuildUI" then
-		wowrostergp:ButtonHandler( )
+		wowrostergp:ButtonHandler();
 	end
 end
 
-function wowrostergp:ButtonHandler( )
+function wowrostergp:ButtonHandler()
 	self.buttons = {}
 	local button = CreateFrame("Button", "GuildProfilerbtm", GuildFrame, "UIPanelButtonTemplate");
 	button.tooltip = "export guild data"--L["Click to export your Guild Profile!"]
@@ -92,6 +146,20 @@ function wowrostergp:OnInitialize()
 		addon:SendMessage("scan updated");
 	end
 	wowrostergp:InitProfile();
+	
+	self.mm = LibStub("AceDB-3.0"):New("cpminimap", {
+		profile = {
+			minimap = {
+				hide = false,
+			},
+		},
+	})
+	icon:Register("WoWRoster Profiler", wowrgpLDB, self.mm.profile.minimap)
+	--self:RegisterChatCommand("bunnies", "CommandTheBunnies")
+---	icon:Show("Bunnies!")
+
+
+	
 end
 
 function wowrostergp:InitState()
@@ -167,6 +235,7 @@ function wowrostergp:InitProfile()
 
 	self.sv = cpProfile[Server]["Guild"][Guild_name];
 	local currentXP, nextLevelXP, dailyXP, maxDailyXP = UnitGetGuildXP("player");
+	local nextxp = nextLevelXP + currentXP;
 	if( self.sv ) then
 	
 		wowrostergp:Print("gp profile started");
@@ -177,7 +246,7 @@ function wowrostergp:InitProfile()
 		self.sv["GuildName"]	= Guild_name;
 		self.sv["Server"]		= Server;
 		self.sv["Locale"]		= GetLocale();
-		self.sv["GuildXP"]		= currentXP..":"..nextLevelXP;
+		self.sv["GuildXP"]		= currentXP..":"..nextxp;
 		self.sv["GuildXPCap"]		= dailyXP..":"..maxDailyXP;
 		self.sv["GuildLevel"]	= GetGuildLevel();
 		self.sv["FactionEn"],self.sv["Faction"]=UnitFactionGroup("player");
@@ -216,6 +285,11 @@ end
 
 function wowrostergp:GUILDBANKFRAME_OPENED()
 	if(wowrpref["guild"]["vault"]) then
+	
+		numTabs = GetNumGuildBankTabs();
+		for tab=1, numTabs do
+			QueryGuildBankTab(tab);
+		end
 		wowrostergp:ScanGuildBank();
 	end
 end
@@ -348,12 +422,40 @@ local NEWS_GUILD_CREATE = 7;
 
 function wowrostergp:Scannews()
 
+	xx = 0;
 	local numGuildNews = GetNumGuildNews();
 	wowrostergp.sv["News"]={};
 	structnews = {};
 	for index=1, numGuildNews do
-	
+	order = nil;
+	xx = xx+1;
 		local isSticky, isHeader, newsType, text1, text2, id, data, data2, weekday, day, month, year = GetGuildNewsInfo(index);
+		
+		wowrostergp:Print("news type "..newsType.."");
+		
+		if ( weekday) then
+			weekday = weekday + 1;
+		else
+			weekday = "";
+		end
+		
+		if ( day ) then
+			day = day + 1;
+		else
+			day = "";
+		end
+		
+		if ( month ) then
+			month = month + 1;
+		else
+			month = "";
+		end
+		
+		if ( year ) then
+			year = year;
+		else
+			year = "";
+		end
 
 			NewsType = gnews[newsType];
 			order = day.."/"..month.."/"..year or "";
@@ -361,22 +463,25 @@ function wowrostergp:Scannews()
 			if( not structnews[NewsType] ) then
 				structnews[NewsType]={};
 			end
-			
-			if( not structnews[NewsType][index] ) then
-				structnews[NewsType][index]={};
+		--[[	
+			if( not structnews[NewsType][xx] ) then
+				structnews[NewsType][xx]={};
 			end
-					
+			]]--		
 			if ( weekday == 0 ) then
 				weekday = 7;
 			end
-			structnews[NewsType][index] = {
-				Type		= NewsType,
+			if (not isHeader) then
+
+			structnews[NewsType][xx] = {
+				--Type		= NewsType,
 				Typpe		= newsType,
-				isheader	= isHeader,
-				DATE		= order,
-				DATEday 		= day or "",
-				DATEmonth 		= month or "",
-				DATEyear 		= year or "",
+				--isheader	= isHeader,
+				Weekday		= weekday or "",
+				Date		= order,
+				DATEday 	= day or "",
+				DATEmonth 	= month or "",
+				DATEyear 	= year or "",
 				ID			= id,
 				Data 		= data or "",
 				Data2 		= data2 or "",
@@ -384,6 +489,7 @@ function wowrostergp:Scannews()
 				Achievement	= text2 or "",
 				Issticky 	= isSticky or "",
 			}
+			end
 			
 		--end
 		
