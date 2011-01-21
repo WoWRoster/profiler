@@ -31,20 +31,9 @@ local wowrgpLDB = LibStub("LibDataBroker-1.1"):NewDataObject("wowrostermm", {
 			tooltip:AddLine(L_BT_RIGHT)
 		end,
 	})
-	--[[
-	
-	"Bunnies!", {
-	type = "data source",
-	text = "Bunnies!",
-	icon = "Interface\\Icons\\ACHIEVEMENT_GUILDPERK_EVERYONES A HERO_RANK2",
-	OnClick = function() print("BUNNIES ARE TAKING OVER THE WORLD") end,
-})]]--
+
 local icon = LibStub("LibDBIcon-1.0")
 
-
-
---local gnews={};
---local gnews["0"]="Guild Achievements";
 local gnews = {"Player Achievements","Instances","Item Loots","Items Crafted","Items Purchesed","Guild Level","Player Level","opps1","opps2"};gnews[0]="Guild Achievements";gnews["-1"]="Guild Achievements";
 if(not wowroster) then wowroster={}; end
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
@@ -92,26 +81,15 @@ end
 
 function wowrostergp:OnEnable()
 	self:RegisterEvent("GUILDBANKFRAME_OPENED");
-	--self:RegisterEvent("GUILDBANKBAGSLOTS_CHANGED")
 	self:RegisterEvent("ADDON_LOADED");
-	--self:RegisterEvent("GuildFrame");
 	wowrostergp:Print("WoWR-GP Enabled! 1.0.r62");
 	wowrostergp:InitState();
---[[	if ( not(Guild_name) ) then
-		Guild_name = GetGuildInfo("player");
-	end
-	if ( not(Guild_name) ) then
-		return stat["_loaded"];
-	end
-]]--
-	--wowrostergp:ButtonHandler();
-
 
 end
---/script DEFAULT_CHAT_FRAME:AddMessage( GetMouseFocus():GetName() );
+
 
 function wowrostergp:ADDON_LOADED(arg1,arg2)
-	wowrostergp:Print(" --: "..arg1.." - "..arg2.."");
+	--wowrostergp:Print(" --: "..arg1.." - "..arg2.."");
 	if arg2 == "Blizzard_GuildUI" then
 		wowrostergp:ButtonHandler();
 	end
@@ -133,10 +111,10 @@ function wowrostergp:ButtonHandler()
 end
 
 function wowrostergp:OnDisable()
-	--cpProfile = wowrostergp.sv;
-	--LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
-	LibStub("AceDB-3.0"):New("cpProfile",self.sv)
---	LibStub("AceDB-3.0"):New("cpProfile",self.db)
+
+	LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
+	LibStub("AceDB-3.0"):New("cpminimap",self.mm)
+
 end
 
 function wowrostergp:OnInitialize()
@@ -155,11 +133,7 @@ function wowrostergp:OnInitialize()
 		},
 	})
 	icon:Register("WoWRoster Profiler", wowrgpLDB, self.mm.profile.minimap)
-	--self:RegisterChatCommand("bunnies", "CommandTheBunnies")
----	icon:Show("Bunnies!")
 
-
-	
 end
 
 function wowrostergp:InitState()
