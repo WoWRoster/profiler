@@ -127,7 +127,7 @@ function wowroster:OnEnable()
 	self:RegisterEvent("BANKFRAME_CLOSED")
 	self:RegisterEvent("ARCHAEOLOGY_TOGGLE");
 	self.buttons = {}
-	
+
 	local button = CreateFrame("Button", "GuildProfilerButton", PaperDollFrame, "UIPanelButtonTemplate")
 	button.tooltip = "export player data"--L["Click to export your Guild Profile!"]
 	button.startTooltip = button.tooltip
@@ -139,11 +139,12 @@ function wowroster:OnEnable()
 	button:SetScript("OnLeave", hideTooltip)
 	button:SetScript("OnClick", function(self)
 		wowroster:export()
-		end )
+		end
+	)
 
-	self.buttons.save = button	
-	wowroster:Print("Hello, WoW Roster Profiler Enabled");
-	wowroster:Print("Hello, WoW Roster Profiler Loaded go to the addons tab in the Interface config section of wow to configure the addon 1.0.r62");
+	self.buttons.save = button
+	wowroster:Print("Hello, WoW Roster Profiler Enabled [1.0 r62]");
+	wowroster:Print("Hello, WoW Roster Profiler Loaded. Go to the Addons tab in the Interface config area to configure the addon");
 
 	wowroster:RegisterChatCommand("wrcp", "WOWRP_ChatCommandHandler");
 	wowroster:RegisterChatCommand("wr", "ChatCommand")
@@ -155,53 +156,55 @@ end
 
 
 function wowroster:WOWRP_ChatCommandHandler(argline)
---wowroster:Print("purge "..argline.." ");
+	--wowroster:Print("purge "..argline.." ");
 	local msg = wowroster.Str2Ary(argline);
---wowroster:Print("purge "..msg[1].." "..msg[2].."");
-local server = GetRealmName();	
+	--wowroster:Print("purge "..msg[1].." "..msg[2].."");
+	local server = GetRealmName();
+
 	if ( msg[1] == "" or msg[1] == "help") then
-		wowroster:Print(" the followinga re the purge commands for the addon NOTE these only work on the server you are on except all which purges all data");
-		wowroster:Print(" /wrcp purge all - purges all data from the sv file");
-		wowroster:Print(" /wrcp purge char CHARNAME - purges that char from your server sv file");
-		wowroster:Print(" /wrcp purge server - purges all data for your server");
-		
+		wowroster:Print(" Purge commands for character data.");
+		wowroster:Print(" NOTE: The first two commands will only work on your current server, except 'purge all' which will purge all data");
+		wowroster:Print(" /wrcp purge char <CHARNAME> - Purges <CHARNAME>");
+		wowroster:Print(" /wrcp purge server - Purges all data for this server");
+		wowroster:Print(" /wrcp purge all - This will purge ALL data");
+
 		return;
 	end
-			if (msg[1] == "purge") then
-			
-				if ( msg[2] == "all" ) then
-					cpProfile=nil;
-					wowroster:Print("All Data Purged!");--cpProfile=nil;
-					return;
-				end
-				if ( msg[2] == "char" ) then
-					if(cpProfile[server] and cpProfile[server]["Character"] and cpProfile[server]["Character"][msg[3]]) then
-						cpProfile[server]["Character"][msg[3]]=nil;
-						isPurged=true;
-						wowroster:Print("Player "..msg[3].."@"..server.." purged");
-					end
-					return;
-				end
-				if ( msg[2] == "server" ) then
-					if(cpPofile[stat["_server"]] and cpProfile[stat["_server"]]["Character"]) then
-						cpProfile[stat["_server"]]["Character"]=nil;
-						isPurged=true;
-						wowroster:Print("Server "..stat["_server"].." purged");
-					end
-					return;
-				end
-				if ( msg[2] == "guild" ) then
-					profile=msg[3] or GetGuildInfo("player") or "";
-					if(myProfile[server] and myProfile[server]["Guild"] and myProfile[server]["Guild"][profile]) then
-						cpProfile[server]["Guild"][profile]=nil;
-						isPurged=true;
-						wowroster:Print("Guild "..profile.."@"..stat["_server"].." purged");
-					end
-					return;
-				end
+
+	if (msg[1] == "purge") then
+		if ( msg[2] == "all" ) then
+			cpProfile=nil;
+			wowroster:Print("All Data Purged!");--cpProfile=nil;
+			return;
+		end
+		if ( msg[2] == "char" ) then
+			if(cpProfile[server] and cpProfile[server]["Character"] and cpProfile[server]["Character"][msg[3]]) then
+				cpProfile[server]["Character"][msg[3]]=nil;
+				isPurged=true;
+				wowroster:Print("Player "..msg[3].."@"..server.." purged");
 			end
-	
+			return;
+		end
+		if ( msg[2] == "server" ) then
+			if(cpPofile[stat["_server"]] and cpProfile[stat["_server"]]["Character"]) then
+				cpProfile[stat["_server"]]["Character"]=nil;
+				isPurged=true;
+				wowroster:Print("Server "..stat["_server"].." purged");
+			end
+			return;
+		end
+		if ( msg[2] == "guild" ) then
+			profile=msg[3] or GetGuildInfo("player") or "";
+			if(myProfile[server] and myProfile[server]["Guild"] and myProfile[server]["Guild"][profile]) then
+				cpProfile[server]["Guild"][profile]=nil;
+				isPurged=true;
+				wowroster:Print("Guild "..profile.."@"..stat["_server"].." purged");
+			end
+			return;
+		end
+	end
 end
+
 wowroster.Str2Ary = function(str)
 	local tab={};
 	str = strtrim(str);
@@ -224,6 +227,7 @@ wowroster.Str2Ary = function(str)
 	end
 	return tab;
 end
+
 function wowroster:OnDisable()
 	self.prefs = wowrpref;
 	LibStub("AceDB-3.0"):New("wowrpref",self.prefs)
@@ -233,11 +237,9 @@ function wowroster:OnDisable()
 	end
 end
 
-
 function wowroster:OnInitialize()
-
 	self.prefs = LibStub("AceDB-3.0"):New("wowrpref")
-	
+
 	if(not wowrpref["enabled"]) then
 		wowrpref = defaults.profile;
 		self.prefs = wowrpref;
@@ -249,10 +251,9 @@ function wowroster:OnInitialize()
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
-	
+
 	--MinimapIcon:OnEnable();
-	
-	
+
 	self.tooltip = CreateFrame("GameTooltip",self.tooltip,UIParent,"GameTooltipTemplate");
 	self.tooltip:SetOwner(UIParent,"ANCHOR_NONE");
 	self.db.RegisterCallback(self, "OnProfileChanged", profileUpdate)
@@ -262,7 +263,7 @@ function wowroster:OnInitialize()
 	wowroster:InitProfile()
 	--self.db = db
 	wowroster:makeconfig()
-	wowroster:UpdateDate();
+	wowroster:UpdateDate()
 end
 
 function wowroster:UpdateDate()
@@ -279,8 +280,9 @@ function wowroster:UpdateDate()
 	struct["timestamp"]["init"]["datakey"]=wowroster.versionkey();
 	struct["timestamp"]["SpellBook"]={};
 end
+
 --[[
-this function is fired when the paperdaul frame button is pressed
+this function is fired when the paperdoll frame button is pressed
 ]]--
 function wowroster:export()
 	wowroster:Print("export button call");
@@ -290,7 +292,7 @@ function wowroster:export()
 	wowroster:GetBuffs(wowroster.db);
 	wowroster:GetEquipment();
 	wowroster:GetTalents();
-	
+
 	wowroster:ScanCurrency();
 	wowroster:SKILLS();
 	wowroster:ScanGlyphs();
@@ -299,168 +301,189 @@ function wowroster:export()
 	wowroster:GetHonor();
 	wowroster:GetArena();
 	wowroster:ScanCompanions();
-	
+
 	wowroster:Show();
-	
 end
 
 function wowroster:Show()
+	msg = "Equipment:"..stat["Equipment"].."/"..table.getn(UnitSlots).." ";	
+	wowroster:Print(msg);
+	msg="";
 
-			msg = "Equipment:"..stat["Equipment"].."/"..table.getn(UnitSlots).." ";	
-			wowroster:Print(msg);
-			msg="";
-			
-			msg = "Trades:";
-			tsort={};
-				table.foreach(stat["Professions"], function (k,v) table.insert(tsort,k) end );
-				table.sort(tsort);
-				if(table.getn(tsort)==0) then
-					msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open each profession to scan";
-				else
-					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item..":"..stat["Professions"][item]["ct"].." errors("..stat["Professions"][item]["errors"]..")";
-					end
-				end
-			wowroster:Print(msg);
-			msg="";
-				
-			msg = "Spells:";
-				tsort={};
-				table.foreach(stat["SpellBook"], function(k,v) table.insert(tsort,k) end );
-				table.sort(tsort);
-				if(table.getn(tsort)==0) then
-					msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your spellbook to scan";
-				else
-					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item..":"..stat["SpellBook"][item];
-					end
-				end
-			wowroster:Print(msg);
-			msg="";
-
-			msg = "Inventory:";
-				tsort={};
-				table.foreach(stat["Inventory"], function(k,v) table.insert(tsort,k) end );
-				table.sort(tsort);
-				if(table.getn(tsort)==0) then
-					msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your bank or 'character info' to scan";
-				else
-					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item.."]"..stat["Inventory"][item]["inv"].."/"..stat["Inventory"][item]["slot"];
-					end
-				end
-			wowroster:Print(msg);
-			msg="";
-			
-			msg = "Bank:";
-				tsort={};
-				table.foreach(stat["Bank"], function(k,v) table.insert(tsort,k) end );
-				table.sort(tsort);
-				if(table.getn(tsort)==0) then
-					msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your bank to scan";
-				else
-					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item.."]"..stat["Bank"][item]["inv"].."/"..stat["Bank"][item]["slot"];
-					end
-				end
-			wowroster:Print(msg);
-			msg="";
-			
-			msg = "Talents:";
-				tsort={};
-				table.foreach(stat["Talents"], function(k,v) table.insert(tsort,k) end );
-				table.sort(tsort);
-				if(table.getn(tsort)==0) then
-					msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your Talents to scan";
-				else
-					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item..":"..stat["Talents"][item];
-					end
-				end
-			wowroster:Print(msg);
-			msg="";
-			
-		if (GetNumTalentGroups(false, "player") == 2) then
-			
-			msg = "DS Talents:";
-				tsort={};
-				table.foreach(stat["DSTalents"], function(k,v) table.insert(tsort,k) end );
-				table.sort(tsort);
-				if(table.getn(tsort)==0) then
-					msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your Talents to scan";
-				else
-					for _,item in pairs(tsort) do
-						msg=msg .. " " .. item..":"..stat["DSTalents"][item];
-					end
-				end
-			wowroster:Print(msg);
-			msg="";
+	msg = "Skills:";
+	tsort={};
+	table.foreach(stat["Professions"], function (k,v) table.insert(tsort,k) end );
+	table.sort(tsort);
+	if(table.getn(tsort)==0) then
+		msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open each profession to scan";
+	else
+		for _,item in pairs(tsort) do
+			msg=msg .. " " .. item..":"..stat["Professions"][item]["ct"].." errors("..stat["Professions"][item]["errors"]..")";
 		end
---WotLK
-				if( GetNumCompanions ) then 
-			msg = "Companions:";
-					tsort={};
-					table.foreach(stat["Companions"], function(k,v) table.insert(tsort,k) end );
-					table.sort(tsort);
-					if(table.getn(tsort)==0) then
-						msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned");
-					else
-						for _,item in pairs(tsort) do
-							msg=msg .. " " .. item..":"..stat["Companions"][item];
-						end
-					end
+	end
+	wowroster:Print(msg);
+	msg="";
+
+	msg = "Spells:";
+		tsort={};
+		table.foreach(stat["SpellBook"], function(k,v) table.insert(tsort,k) end );
+		table.sort(tsort);
+		if(table.getn(tsort)==0) then
+			msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your spellbook to scan";
+		else
+			for _,item in pairs(tsort) do
+				msg=msg .. " " .. item..":"..stat["SpellBook"][item];
+			end
+		end
+	wowroster:Print(msg);
+	msg="";
+
+	msg = "Inventory:";
+		tsort={};
+		table.foreach(stat["Inventory"], function(k,v) table.insert(tsort,k) end );
+		table.sort(tsort);
+		if(table.getn(tsort)==0) then
+			msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your bank or 'character info' to scan";
+		else
+			for _,item in pairs(tsort) do
+				msg=msg .. " " .. item.."]"..stat["Inventory"][item]["inv"].."/"..stat["Inventory"][item]["slot"];
+			end
+		end
+	wowroster:Print(msg);
+	msg="";
+
+	msg = "Bank:";
+		tsort={};
+		table.foreach(stat["Bank"], function(k,v) table.insert(tsort,k) end );
+		table.sort(tsort);
+		if(table.getn(tsort)==0) then
+			msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your bank to scan";
+		else
+			for _,item in pairs(tsort) do
+				msg=msg .. " " .. item.."]"..stat["Bank"][item]["inv"].."/"..stat["Bank"][item]["slot"];
+			end
+		end
+	wowroster:Print(msg);
+	msg="";
+
+	msg = "Talents:";
+		tsort={};
+		table.foreach(stat["Talents"], function(k,v) table.insert(tsort,k) end );
+		table.sort(tsort);
+		if(table.getn(tsort)==0) then
+			msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your talents to scan";
+		else
+			for _,item in pairs(tsort) do
+				msg=msg .. " " .. item..":"..stat["Talents"][item];
+			end
+		end
+	wowroster:Print(msg);
+	msg="";
+
+	if (GetNumTalentGroups(false, "player") == 2) then
+		msg = "Dual Spec Talents:";
+			tsort={};
+			table.foreach(stat["DSTalents"], function(k,v) table.insert(tsort,k) end );
+			table.sort(tsort);
+			if(table.getn(tsort)==0) then
+				msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your talents to scan";
+			else
+				for _,item in pairs(tsort) do
+					msg=msg .. " " .. item..":"..stat["DSTalents"][item];
 				end
-			
-			wowroster:Print(msg);
-			msg="";
-				
+			end
+		wowroster:Print(msg);
+		msg="";
+	end
+
+	if( GetNumCompanions ) then 
+		msg = "Companions:";
+		tsort={};
+		table.foreach(stat["Companions"], function(k,v) table.insert(tsort,k) end );
+		table.sort(tsort);
+		if(table.getn(tsort)==0) then
+			msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned");
+		else
+			for _,item in pairs(tsort) do
+				msg=msg .. " " .. item..":"..stat["Companions"][item];
+			end
+		end
+	end
+
+	wowroster:Print(msg);
+	msg="";
+
 end
 
 function wowroster:ARCHAEOLOGY_TOGGLE()
-			wowroster:ARCH_frame()
-		end
-		
+	wowroster:ARCH_frame()
+end
+
 function wowroster:BANKFRAME_OPENED()
-			wowroster:GetBank();
-		end
+	wowroster:GetBank();
+end
+
 function wowroster:BANKFRAME_CLOSED()
-			wowroster:GetBank();
-			wowroster:GetInventory();
-			wowroster:GetEquipment();
-		end
+	wowroster:GetBank();
+	wowroster:GetInventory();
+	wowroster:GetEquipment();
+end
+
 function wowroster:makeconfig()
-			
 	local acOptions = {
 	type = "group",
-	name = "WoW Roster Character Profiler",
+	name = "WoWRoster Character Profiler",
 	get = GetProperty, set = SetProperty, handler = wowroster,
 	args = {
-		heading = {	type = "description",name = "Welcome to the WoWRoster CP config section",fontSize = "medium",order = 10,width = "full",
+		heading = {
+			type = "description",
+			name = "Welcome to the WoWRoster Character Profiler config",
+			fontSize = "medium",
+			order = 10,
+			width = "full",
 		},
 		questsfull= {
-			type = "toggle",			name = "Full Quests",			desc = "get quest Description and Objectives or not",--.broadcastDesc,
-			set = function(info,val) wowrpref[info[#info]] = val end,			get = function(info) return wowrpref[info[#info]] end,			order = 12,
+			type = "toggle",
+			name = "Full Quests",
+			desc = "Get the full quest description and objectives",--.broadcastDesc,
+			set = function(info,val) wowrpref[info[#info]] = val end,
+			get = function(info) return wowrpref[info[#info]] end,
+			order = 12,
 		},
 		Scan ={
-		
 			type = "group",
-			name = "Scanning Options",
+			name = "Scan Options",
 			args = {
-				
 				heading = {
-					type = "description",name = "Scanning Options",	fontSize = "medium",order = 14,	width = "full",
+					type = "description",
+					name = "Scanning Options",
+					fontSize = "medium",
+					order = 14,
+					width = "full",
 				},
 				inventory = {
-					type = "toggle",name = "Inventory",	desc = "get contents of your bags or not",	set = function(info,val) wowrpref["scan"][info[#info]]  = val end,
-					get = function(info) return wowrpref["scan"][info[#info]]  end,	order = 16,
+					type = "toggle",
+					name = "Inventory",
+					desc = "Scan the contents of your bags",
+					set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+					get = function(info) return wowrpref["scan"][info[#info]] end,
+					order = 16,
 				},
 				bank = {
-					type = "toggle",name = "Bank",desc = "get contents of your Bank or not",
-					set = function(info,val) wowrpref["scan"][info[#info]] = val end,get = function(info) return wowrpref["scan"][info[#info]]  end,order = 17,
+					type = "toggle",
+					name = "Bank",
+					desc = "Scan the contents of your bank",
+					set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+					get = function(info) return wowrpref["scan"][info[#info]] end,
+					order = 17,
 				},
 				quests = {
-					type = "toggle",name = "Quests",desc = "get contents of your Quest log or not",
-					set = function(info,val) wowrpref["scan"][info[#info]] = val end,get = function(info) return wowrpref["scan"][info[#info]] end,order = 18,
+					type = "toggle",
+					name = "Quests",
+					desc = "Scan your quest log",
+					set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+					get = function(info) return wowrpref["scan"][info[#info]] end,
+					order = 18,
 				},
 				mail = {
 					type = "toggle",name = "Mail Box",desc = "get contents of your Mail Box or not",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
