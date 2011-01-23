@@ -431,32 +431,47 @@ end
 function wowroster:makeconfig()
 	local acOptions = {
 		type = "group",
-		name = "WoWRoster Character Profiler",
+		name = "WoWRoster Profiler",
 		get = GetProperty, set = SetProperty, handler = wowroster,
 		args = {
 			heading = {
 				type = "description",
-				name = "Welcome to the WoWRoster Profiler config",
+				name = "Welcome to the WoWRoster Profiler configuration",
 				fontSize = "medium",
-				order = 10,
+				order = 9,
 				width = "full",
 			},
-			questsfull= {
+--[[
+			minimapicon = {
 				type = "toggle",
-				name = "Full Quests",
-				desc = "Scan full quest description and objective list",
-				--.broadcastDesc,
-				set = function(info,val) wowrpref[info[#info]] = val end,
-				get = function(info) return wowrpref[info[#info]] end,
-				order = 12,
+				name = "Mini Map Icon",
+				set = function(info, value)
+					wowrostermm.hide = not value
+					if wowrostermm.hide then
+						icon:Hide(addonName)
+					else
+						icon:Show(addonName)
+					end
+				end,
+				get = function(info) return (not wowrostermm.hide) end,
+				order = 10,
 			},
+]]--
+
 			Scan ={
 				type = "group",
 				name = "Scan Options",
 				args = {
 					heading = {
 						type = "description",
-						name = "Scanning Options",
+						name = "Scan Options",
+						fontSize = "medium",
+						order = 13,
+						width = "full",
+					},
+					heading_info = {
+						type = "description",
+						name = "Choose what WoWRoster Profiler will scan on your character",
 						fontSize = "medium",
 						order = 14,
 						width = "full",
@@ -467,7 +482,7 @@ function wowroster:makeconfig()
 						desc = "Scan the contents of your bags",
 						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
 						get = function(info) return wowrpref["scan"][info[#info]] end,
-						order = 16,
+						order = 15,
 					},
 					bank = {
 						type = "toggle",
@@ -475,7 +490,7 @@ function wowroster:makeconfig()
 						desc = "Scan the contents of your bank",
 						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
 						get = function(info) return wowrpref["scan"][info[#info]] end,
-						order = 17,
+						order = 16,
 					},
 					quests = {
 						type = "toggle",
@@ -483,12 +498,20 @@ function wowroster:makeconfig()
 						desc = "Scan your quest log",
 						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
 						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 17,
+					},
+					questsfull= {
+						type = "toggle",
+						name = "Full Quests",
+						desc = "Scan full quest description and objective list",
+						set = function(info,val) wowrpref[info[#info]] = val end,
+						get = function(info) return wowrpref[info[#info]] end,
 						order = 18,
 					},
 					mail = {
 						type = "toggle",
 						name = "Mail Box",
-						desc = "Scan your Mail Box",
+						desc = "Scan your mail box",
 						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
 						get = function(info) return wowrpref["scan"][info[#info]] end,
 						order = 19,
@@ -566,7 +589,14 @@ function wowroster:makeconfig()
 				args = {
 					heading = {
 						type = "description",
-						name = "Dual Spec Options, sets scanning of your secondary talent spec",
+						name = "Dual Spec Options",
+						fontSize = "medium",
+						order = 28,
+						width = "full",
+					},
+					heading_info = {
+						type = "description",
+						name = "Enable or disable scanning options for your secondary talent spec",
 						fontSize = "medium",
 						order = 29,
 						width = "full",
@@ -600,11 +630,18 @@ function wowroster:makeconfig()
 
 			guildss ={
 				type = "group",
-				name = "Guild Scanning Options",
+				name = "Guild Scan Options",
 				args = {
 					heading = {
 						type = "description",
-						name = "options for scanning your guild are selected here.",
+						name = "Guild Scan Options",
+						fontSize = "medium",
+						order = 28,
+						width = "full",
+					},
+					heading_info = {
+						type = "description",
+						name = "Choose what WoWRoster Profiler will scan for your guild",
 						fontSize = "medium",
 						order = 29,
 						width = "full",
@@ -665,13 +702,13 @@ function wowroster:makeconfig()
 	local server = GetRealmName();
 	local acPurge = {
 		type = "group",
-		name = "Purge Profile Data",
+		name = "Delete Profile Data",
 		get = GetProperty, set = SetProperty, handler = wowroster,
 
 		args = {
 			heading = {
 				type = "description",
-				name = "Welcome to the WoWRoster Profiler config",
+				name = "Welcome to the WoWRoster Profiler data configuration",
 				fontSize = "medium",
 				order = 10,
 				width = "full",
@@ -691,7 +728,7 @@ function wowroster:makeconfig()
 				end,
 				get = false, -- no default value
 				set = function( info, v )
-				wowroster:Print( "Code to delete data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
+				wowroster:Print("Code to delete data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
 				end,
 			},
 			wipeac = {
@@ -713,7 +750,7 @@ function wowroster:makeconfig()
 				end,
 				get = false, -- no default value
 				set = function( info, v )
-				wowroster:Print( "Code to delete data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
+				wowroster:Print("Code to delete data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
 				end,
 			},
 			wipes = {
@@ -732,7 +769,7 @@ function wowroster:makeconfig()
 				end,
 				get = false, -- no default value
 				set = function( info, v )
-				wowroster:Print( "Code to delete data for cpProfiler[" .. v .. "]" )
+				wowroster:Print("Code to delete data for cpProfiler[" .. v .. "]" )
 				end,
 			},
 			wipeg = {
@@ -755,7 +792,7 @@ function wowroster:makeconfig()
 				end,
 				get = false, -- no default value
 				set = function( info, v )
-				wowroster:Print( "Code to delete data for cpProfiler[" .. v .. "]" )
+				wowroster:Print("Code to delete data for cpProfiler[" .. v .. "]" )
 				end,
 			},
 --[[
@@ -790,23 +827,22 @@ function wowroster:makeconfig()
 	},
 ]]--
 
-	LibStub( 'AceConfig-3.0'):RegisterOptionsTable( "wowroster cp",acOptions)
+	LibStub('AceConfig-3.0'):RegisterOptionsTable("wowroster cp",acOptions)
 
 	ac:RegisterOptionsTable("WoWRoster CP", acOptions)
 	--ac:RegisterOptionsTable("Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(wowrpref.profiles))
 
-	local mainOpts = acd:AddToBlizOptions("WoW Roster Cp", "WoWRoster Profiler")
+	local mainOpts = acd:AddToBlizOptions("wowroster cp", "WoWRoster Profiler")
 
-	LibStub("AceConfig-3.0"):RegisterOptionsTable("Profiles2", acPurge)
-	self.profilesFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Profiles2", "Profiles", "WoWRoster Profiler")
+	LibStub("AceConfig-3.0"):RegisterOptionsTable("wowroster profiles", acPurge)
+	self.profilesFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("wowroster profiles", "Profiles", "WoWRoster Profiler")
 
 
 	mainOpts:HookScript("OnShow", function()
 		wowroster:Enable()
-		local p = findPanel("WoW Roster Cp")
+		local p = findPanel("wowroster cp")
 		if p and p.element.collapsed then OptionsListButtonToggle_OnClick(p.toggle) end
-		end
-	)
+	end)
 end
 
 function wowroster:ChatCommand(input)
