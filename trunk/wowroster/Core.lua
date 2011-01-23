@@ -64,6 +64,7 @@ local stat = {
 	Pets={}, Stable={}, PetSpell={}, PetTalent={},
 	Companions={},
 };
+
 local defaults={
 	profile={
 		["enabled"]=true,
@@ -100,8 +101,9 @@ local defaults={
 			["vault_money"]=true,
 			["trades"]=true,
 		},
-	},		
+	},
 };
+
 local UnitPower={"Rage","Focus","Energy","Happiness","Runes","RunicPower"};UnitPower[0]="Mana";
 local UnitSlots={"Head","Neck","Shoulder","Shirt","Chest","Waist","Legs","Feet","Wrist","Hands","Finger0","Finger1","Trinket0","Trinket1","Back","MainHand","SecondaryHand","Ranged","Tabard"};
 local UnitStatName={"Strength","Agility","Stamina","Intellect","Spirit"};
@@ -118,10 +120,8 @@ local function findPanel(name, parent)
 	end
 end
 
-
-
 function wowroster:OnEnable()
-    -- Called when the addon is enabled\
+	-- Called when the addon is enabled
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	self:RegisterEvent("BANKFRAME_OPENED")
 	self:RegisterEvent("BANKFRAME_CLOSED")
@@ -129,7 +129,7 @@ function wowroster:OnEnable()
 	self.buttons = {}
 
 	local button = CreateFrame("Button", "GuildProfilerButton", PaperDollFrame, "UIPanelButtonTemplate")
-	button.tooltip = "export player data"--L["Click to export your Guild Profile!"]
+	button.tooltip = "Save player data"--L["Click to export your Guild Profile!"]
 	button.startTooltip = button.tooltip
 	button:SetPoint("TOPRIGHT", PaperDollFrame, "TOPRIGHT", -30, 0)
 	button:SetWidth(55)
@@ -143,14 +143,13 @@ function wowroster:OnEnable()
 	)
 
 	self.buttons.save = button
-	wowroster:Print("Hello, WoW Roster Profiler Enabled [1.0 r62]");
-	wowroster:Print("Hello, WoW Roster Profiler Loaded. Go to the Addons tab in the Interface config area to configure the addon");
+	wowroster:Print("Hello, WoWRoster Profiler Enabled and Loaded |cffff3399[1.0 r73]|r");
+	wowroster:Print("Open the menu, click Interface, then go to the Addons tab to configure");
 
 	wowroster:RegisterChatCommand("wrcp", "WOWRP_ChatCommandHandler");
 	wowroster:RegisterChatCommand("wr", "ChatCommand")
 	wowroster:RegisterChatCommand("wroptions", "ChatCommand")
 	--icon:Load();
-	
 end
 
 
@@ -162,11 +161,11 @@ function wowroster:WOWRP_ChatCommandHandler(argline)
 	local server = GetRealmName();
 
 	if ( msg[1] == "" or msg[1] == "help") then
-		wowroster:Print(" Purge commands for character data.");
-		wowroster:Print(" NOTE: The first two commands will only work on your current server, except 'purge all' which will purge all data");
-		wowroster:Print(" /wrcp purge char <CHARNAME> - Purges <CHARNAME>");
-		wowroster:Print(" /wrcp purge server - Purges all data for this server");
-		wowroster:Print(" /wrcp purge all - This will purge ALL data");
+		wowroster:Print("Purge commands for character data.");
+		wowroster:Print("NOTE: The first two commands will only work on your current server, except 'purge all' which will purge all data");
+		wowroster:Print("/wrcp purge char <CHARNAME> - Purges <CHARNAME>");
+		wowroster:Print("/wrcp purge server - Purges all data for this server");
+		wowroster:Print("/wrcp purge all - This will purge |cffff0000ALL|r data");
 
 		return;
 	end
@@ -243,7 +242,7 @@ function wowroster:OnInitialize()
 	if(not wowrpref["enabled"]) then
 		wowrpref = defaults.profile;
 		self.prefs = wowrpref;
-		wowroster:Print("defaults loaded verson ".. self.prefs["ver"] .."")
+		wowroster:Print("Defaults loaded, verson ".. self.prefs["ver"])
 	end
 	self.db = LibStub("AceDB-3.0"):New("cpProfile");
 	self.profileOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
@@ -285,7 +284,7 @@ end
 this function is fired when the paperdoll frame button is pressed
 ]]--
 function wowroster:export()
-	wowroster:Print("export button call");
+	wowroster:Print("Save button call");
 	wowroster:UpdateDate();
 	wowroster:GetSpellBook();
 	wowroster:GetInventory();
@@ -431,220 +430,296 @@ end
 
 function wowroster:makeconfig()
 	local acOptions = {
-	type = "group",
-	name = "WoWRoster Character Profiler",
-	get = GetProperty, set = SetProperty, handler = wowroster,
-	args = {
-		heading = {
-			type = "description",
-			name = "Welcome to the WoWRoster Character Profiler config",
-			fontSize = "medium",
-			order = 10,
-			width = "full",
-		},
-		questsfull= {
-			type = "toggle",
-			name = "Full Quests",
-			desc = "Get the full quest description and objectives",--.broadcastDesc,
-			set = function(info,val) wowrpref[info[#info]] = val end,
-			get = function(info) return wowrpref[info[#info]] end,
-			order = 12,
-		},
-		Scan ={
-			type = "group",
-			name = "Scan Options",
-			args = {
-				heading = {
-					type = "description",
-					name = "Scanning Options",
-					fontSize = "medium",
-					order = 14,
-					width = "full",
-				},
-				inventory = {
-					type = "toggle",
-					name = "Inventory",
-					desc = "Scan the contents of your bags",
-					set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,
-					order = 16,
-				},
-				bank = {
-					type = "toggle",
-					name = "Bank",
-					desc = "Scan the contents of your bank",
-					set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,
-					order = 17,
-				},
-				quests = {
-					type = "toggle",
-					name = "Quests",
-					desc = "Scan your quest log",
-					set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,
-					order = 18,
-				},
-				mail = {
-					type = "toggle",name = "Mail Box",desc = "get contents of your Mail Box or not",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 19,
-				},
-				glyphs = {
-					type = "toggle",name = "Glyphs",desc = "get characters Glyphs",	set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 20,
-				},
-				talents = {
-					type = "toggle",name = "Talents",desc = "Get your characters Talents or not",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 21,
-				},
-				pet = {
-					type = "toggle",name = "Pets",desc = "Scan Pets NYI (returns no data)",	set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 22,
-				},
-				spells = {
-					type = "toggle",name = "Spell Book",desc = "Get your spells from the spell book",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 23,
-				},
-				professions = {
-					type = "toggle",name = "Professions",desc = "Scan Professions",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 24,
-				},
-				companions = {
-					type = "toggle",name = "Companions/Mounts",desc ="Companion and mount information",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 25,
-				},
-				honor = {
-					type = "toggle",name = "Honor",desc = "Honor Info for your character",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 26,
-				},
-				reputation = {
-					type = "toggle",name = "Reputation",desc="Get Reputation info for your character",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 27,
-				},
-			},
-		},
-		
-		DSScan ={
-		
-			type = "group",
-			name = "Dual Spec Options",
-			args = {
-				heading = {
-					type = "description",name = "Dual Spec Options",fontSize = "medium",order = 29,	width = "full",
-				},
-				dsglyphs = {
-					type = "toggle",name = "Glyphs",desc = "get characters Glyphs",	set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 30,
-				},
-				dstalents = {
-					type = "toggle",name = "Talents",desc = "Get your characters Talents or not",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 31,
-				},
-				dsspells = {
-					type = "toggle",name = "Spell Book",desc = "Get your spells from the spell book",set = function(info,val) wowrpref["scan"][info[#info]] = val end,
-					get = function(info) return wowrpref["scan"][info[#info]] end,order = 33,
-				},	
-			},
-		},
-		
-		guildss ={
-		
-			type = "group",
-			name = "Guild Scanning Options",
-			args = {
-				heading = {
-					type = "description",name = "options for scanning your guild are selected here.",fontSize = "medium",order = 29,	width = "full",
-				},
-				title = {
-					type = "toggle",name = "Ranks",desc = "get member rank info for export?",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
-					get = function(info) return wowrpref["guild"][info[#info]] end,order = 30,
-				},
-				compact = {
-					type = "toggle",name = "Compact",desc = "skip empty veriables here",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
-					get = function(info) return wowrpref["guild"][info[#info]] end,order = 31,
-				},
-				vault = {
-					type = "toggle",name = "Guild Vault",desc = "scanning of guild vault",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
-					get = function(info) return wowrpref["guild"][info[#info]] end,order = 32,
-				},
-				vault_log = {
-					type = "toggle",name = "Guild Vault Tab Logs",desc = "scanning of guild vault tab logs",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
-					get = function(info) return wowrpref["guild"][info[#info]] end,order = 33,
-				},
-				vault_money = {
-					type = "toggle",name = "Guild Vault Money Log",desc = "scanning of guild vault money log",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
-					get = function(info) return wowrpref["guild"][info[#info]] end,order = 34,
-				},
-				trades = {
-					type = "toggle",name = "Guild Craft",desc = "scan the professions list for storage on the site (no recipes stored)",	set = function(info,val) wowrpref["guild"][info[#info]] = val end,
-					get = function(info) return wowrpref["guild"][info[#info]] end,order = 35,
-				},
-			},
-		},
-				
-	},
-	}
-	local server = GetRealmName();
-	local acPurge = {
 		type = "group",
-		name = "purge profiles",
+		name = "WoWRoster Character Profiler",
 		get = GetProperty, set = SetProperty, handler = wowroster,
-		
 		args = {
-			heading = {	
+			heading = {
 				type = "description",
-				name = "Welcome to the WoWRoster CP config section",
+				name = "Welcome to the WoWRoster Profiler config",
 				fontSize = "medium",
 				order = 10,
 				width = "full",
 			},
-			
+			questsfull= {
+				type = "toggle",
+				name = "Full Quests",
+				desc = "Scan full quest description and objective list",
+				--.broadcastDesc,
+				set = function(info,val) wowrpref[info[#info]] = val end,
+				get = function(info) return wowrpref[info[#info]] end,
+				order = 12,
+			},
+			Scan ={
+				type = "group",
+				name = "Scan Options",
+				args = {
+					heading = {
+						type = "description",
+						name = "Scanning Options",
+						fontSize = "medium",
+						order = 14,
+						width = "full",
+					},
+					inventory = {
+						type = "toggle",
+						name = "Inventory",
+						desc = "Scan the contents of your bags",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 16,
+					},
+					bank = {
+						type = "toggle",
+						name = "Bank",
+						desc = "Scan the contents of your bank",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 17,
+					},
+					quests = {
+						type = "toggle",
+						name = "Quests",
+						desc = "Scan your quest log",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 18,
+					},
+					mail = {
+						type = "toggle",
+						name = "Mail Box",
+						desc = "Scan your Mail Box",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 19,
+					},
+					talents = {
+						type = "toggle",
+						name = "Talents",
+						desc = "Scan your talents",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 20,
+					},
+					glyphs = {
+						type = "toggle",
+						name = "Glyphs",
+						desc = "Scan your glyphs",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 21,
+					},
+					pet = {
+						type = "toggle",
+						name = "Pets",
+						desc = "Scan Pets [NYI] (returns no data)",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 22,
+					},
+					spells = {
+						type = "toggle",
+						name = "Spell Book",
+						desc = "Scan your spell book",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 23,
+					},
+					professions = {
+						type = "toggle",
+						name = "Professions",
+						desc = "Scan Professions",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 24,
+					},
+					companions = {
+						type = "toggle",
+						name = "Companions/Mounts",
+						desc ="Scan companion and mount data",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 25,
+					},
+					honor = {
+						type = "toggle",
+						name = "Honor",
+						desc = "Scan honor data",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 26,
+					},
+					reputation = {
+						type = "toggle",
+						name = "Reputation",
+						desc="Scan reputation data",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 27,
+					},
+				},
+			},
+
+			DSScan ={
+				type = "group",
+				name = "Dual Spec Options",
+				args = {
+					heading = {
+						type = "description",
+						name = "Dual Spec Options, sets scanning of your secondary talent spec",
+						fontSize = "medium",
+						order = 29,
+						width = "full",
+					},
+					dstalents = {
+						type = "toggle",
+						name = "Talents",
+						desc = "Scan your secondary talents",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 30,
+					},
+					dsglyphs = {
+						type = "toggle",
+						name = "Glyphs",
+						desc = "Scan your secondary glyphs",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 31,
+					},
+					dsspells = {
+						type = "toggle",
+						name = "Spell Book",
+						desc = "Scan your secondary spell book",
+						set = function(info,val) wowrpref["scan"][info[#info]] = val end,
+						get = function(info) return wowrpref["scan"][info[#info]] end,
+						order = 32,
+					},
+				},
+			},
+
+			guildss ={
+				type = "group",
+				name = "Guild Scanning Options",
+				args = {
+					heading = {
+						type = "description",
+						name = "options for scanning your guild are selected here.",
+						fontSize = "medium",
+						order = 29,
+						width = "full",
+					},
+					title = {
+						type = "toggle",
+						name = "Ranks",
+						desc = "Scan member rank data",
+						set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+						get = function(info) return wowrpref["guild"][info[#info]] end,
+						order = 30,
+					},
+					compact = {
+						type = "toggle",
+						name = "Compact",
+						desc = "Allow empty variables to be skipped",
+						set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+						get = function(info) return wowrpref["guild"][info[#info]] end,
+						order = 31,
+					},
+					vault = {
+						type = "toggle",
+						name = "Guild Vault",
+						desc = "Scan the guild vault",
+						set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+						get = function(info) return wowrpref["guild"][info[#info]] end,
+						order = 32,
+					},
+					vault_log = {
+						type = "toggle",
+						name = "Guild Vault Logs",
+						desc = "Scan the guild vault item logs",
+						set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+						get = function(info) return wowrpref["guild"][info[#info]] end,
+						order = 33,
+					},
+					vault_money = {
+						type = "toggle",
+						name = "Guild Vault Money Log",
+						desc = "Scan the guild vault money log",
+						set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+						get = function(info) return wowrpref["guild"][info[#info]] end,
+						order = 34,
+					},
+					trades = {
+						type = "toggle",
+						name = "Guild Skills",
+						desc = "Scan the professions list for entire guild [NYI] (no recipes stored)",
+						set = function(info,val) wowrpref["guild"][info[#info]] = val end,
+						get = function(info) return wowrpref["guild"][info[#info]] end,
+						order = 35,
+					},
+				},
+			},
+		},
+	}
+
+	local server = GetRealmName();
+	local acPurge = {
+		type = "group",
+		name = "Purge Profile Data",
+		get = GetProperty, set = SetProperty, handler = wowroster,
+
+		args = {
+			heading = {
+				type = "description",
+				name = "Welcome to the WoWRoster Profiler config",
+				fontSize = "medium",
+				order = 10,
+				width = "full",
+			},
+
 			wipec = {
 				order = 100,
-				name = "Character Wipe",
-				desc = "select a toon to wipe",
+				name = "Delete one Character",
+				desc = "Select a character to delete",
 				type = "select",
 				values = function( info )
-				local t = { }
+					local t = { }
 					for k in pairs( cpProfile[GetRealmName()].Character ) do
 						t[k] = k
 					end
-				return t
+					return t
 				end,
 				get = false, -- no default value
 				set = function( info, v )
-				print( "code to wipe data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
+				wowroster:Print( "Code to delete data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
 				end,
 			},
 			wipeac = {
 				order = 100,
-				name = "Character Wipe (all)",
-				desc = "select a toon to wipe",
+				name = "Delete all Characters",
+				desc = "Delete all character data",
 				type = "select",
 				values = function( info )
 				local t = { }
-				
 					for k in pairs( cpProfile ) do
 						if (k ~= "profileKeys") then
-						
 							for c in pairs( cpProfile[k].Character ) do
-								print("    Char: "..c.." "..k);
+								wowroster:Print("Char: "..c.." "..k);
 								t[c.."-"..k] = ""..c.." ("..k..")"
 							end
 						end
 					end
-
-				return t
+					return t
 				end,
 				get = false, -- no default value
 				set = function( info, v )
-				print( "code to wipe data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
+				wowroster:Print( "Code to delete data for cpProfiler[" .. GetRealmName() .. "].Character[" .. v .. "]" )
 				end,
 			},
 			wipes = {
 				order = 101,
-				name = "Server Wipe",
-				desc = "select a server to wipe",
+				name = "Delete Server Data",
+				desc = "Select a server to delete",
 				type = "select",
 				values = function( info )
 				local t = { }
@@ -653,76 +728,75 @@ function wowroster:makeconfig()
 							t[k] = k
 						end
 					end
-				return t
+					return t
 				end,
 				get = false, -- no default value
 				set = function( info, v )
-				print( "code to wipe data for cpProfiler.Character[" .. v .. "]" )
+				wowroster:Print( "Code to delete data for cpProfiler[" .. v .. "]" )
 				end,
 			},
 			wipeg = {
 				order = 102,
-				name = "Guild Wipe",
-				desc = "select a guild to wipe",
+				name = "Delete Guild Data",
+				desc = "Select a guild to delete",
 				type = "select",
 				values = function( info )
-				local t = { }
-				if (cpProfile[GetRealmName()]["Guild"]) then
-					for k in pairs( cpProfile[GetRealmName()].Guild ) do
-						if (k ~= "profileKeys") then
-							t[k] = k
-						end
+					local t = { }
+					if (cpProfile[GetRealmName()]["Guild"]) then
+						for k in pairs( cpProfile[GetRealmName()].Guild ) do
+							if (k ~= "profileKeys") then
+								t[k] = k
+							end
 					end
-				else
-					t=nil;
-				end
-				return t
+					else
+						t=nil;
+					end
+					return t
 				end,
 				get = false, -- no default value
 				set = function( info, v )
-				print( "code to wipe data for cpProfiler.Character[" .. v .. "]" )
+				wowroster:Print( "Code to delete data for cpProfiler[" .. v .. "]" )
 				end,
 			},
-			--[[
+--[[
 			wipeall = {
 				order = 104,
-				name = "Purge All",
-				desc = "Wipe all data stored in the global wowroster.lua file",
+				name = "Delete All",
+				desc = "Wipe all data stored",
 				type = "execute",
 				confirm = "function",
-				--values = cpProfile = nil,
+				values = cpProfile = nil,
 				get = false, -- no default value
 				set = 
-				print( "code to wipe data for cpProfiler[" .. GetRealmName() .. "].Character[all]" ),				
+				wowroster:Print( "Code to delete data for cpProfiler[" .. GetRealmName() .. "].Character[all]" ),
 			
-			},]]--
+			},
+]]--
 		},
 	}
-	
-	
 
+--[[
+	anchor = {
+		order	= 9,
+		type	= "select",
+		name	= L["Anchor"],
+		desc	= L["The corner of the Artifacts list that the frame will grow from."],
+		get	= function() return db.artifact.anchor end,
+		set	= function(_, value) 
+			db.artifact.anchor = value
+			Archy:SaveFramePosition(racesFrame)
+		end,
+		values	= frameAnchorOptions,
+	},
+]]--
 
-		
---[[anchor = {
-					order	= 9,
-					type	= "select",
-					name	= L["Anchor"],
-					desc	= L["The corner of the Artifacts list that the frame will grow from."],
-					get	= function() return db.artifact.anchor end,
-					set	= function(_, value) 
-						db.artifact.anchor = value
-						Archy:SaveFramePosition(racesFrame)
-					end,
-					values	= frameAnchorOptions,
-				},]]--
-				
 	LibStub( 'AceConfig-3.0'):RegisterOptionsTable( "wowroster cp",acOptions)
-	
-	ac:RegisterOptionsTable("WoW Roster Cp", acOptions)
+
+	ac:RegisterOptionsTable("WoWRoster CP", acOptions)
 	--ac:RegisterOptionsTable("Profiles", LibStub("AceDBOptions-3.0"):GetOptionsTable(wowrpref.profiles))
-	
+
 	local mainOpts = acd:AddToBlizOptions("WoW Roster Cp", "WoWRoster Profiler")
-	
+
 	LibStub("AceConfig-3.0"):RegisterOptionsTable("Profiles2", acPurge)
 	self.profilesFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions("Profiles2", "Profiles", "WoWRoster Profiler")
 
@@ -731,17 +805,17 @@ function wowroster:makeconfig()
 		wowroster:Enable()
 		local p = findPanel("WoW Roster Cp")
 		if p and p.element.collapsed then OptionsListButtonToggle_OnClick(p.toggle) end
-	end)
+		end
+	)
 end
 
 function wowroster:ChatCommand(input)
-    if not input or input:trim() == "" then
-        InterfaceOptionsFrame_OpenToCategory("WoWRoster Profiler")
-    else
-        LibStub("AceConfigCmd-3.0").HandleCommand("WoW Roster Cp", "wr", "wroptions", input)
-    end
+	if not input or input:trim() == "" then
+		InterfaceOptionsFrame_OpenToCategory("WoWRoster Profiler")
+	else
+		LibStub("AceConfigCmd-3.0").HandleCommand("WoWRoster CP", "wr", "wroptions", input)
+	end
 end
-	
 
 function wowroster:InitState()
 	local _,class=UnitClass("player");
@@ -763,7 +837,7 @@ function wowroster:InitState()
 		Companions={},
 	};
 	self.queue={};
-	
+
 	state = function(self,...)
 	if(not self.prefs) then return end
 	local state = self.prefs;
@@ -815,9 +889,9 @@ State = function(self,...)
 	elseif( state and state[key] ) then
 		return state[key];
 	end
-		return nil;
-	end
-	
+	return nil;
+end
+
 function wowroster:InitProfile()
 	if( not cpProfile ) then
 		cpProfile={}; end
@@ -849,6 +923,7 @@ function wowroster:InitProfile()
 	end
 	return self.state["_loaded"];
 end
+
 wowroster.UpdateDate = function(self,...)
 	if(not wowroster.db) then return; end;
 	local struct=wowroster.db;
@@ -926,7 +1001,8 @@ function wowroster:GetHonor()
 	local lifetimeHK,lifetimeRank=GetPVPLifetimeStats();
 	if(stat["Honor"]~=lifetimeHK) then
 		if (not wowroster.db["Honor"]) then
-			wowroster.db["Honor"]={}; end
+			wowroster.db["Honor"]={};
+		end
 		local structHonor=wowroster.db["Honor"];
 		local rankName,rankNumber=GetPVPRankInfo(lifetimeRank);
 		local sessionHK,sessionCP=GetPVPSessionStats();
@@ -937,7 +1013,8 @@ function wowroster:GetHonor()
 		structHonor["Lifetime"]={
 			Rank=rankNumber,
 			Name=rankName,
-			HK=lifetimeHK};
+			HK=lifetimeHK
+		};
 		structHonor["Current"]={
 			Rank=0,
 			Name=NONE,
@@ -945,7 +1022,7 @@ function wowroster:GetHonor()
 			Progress=0,
 			HonorPoints=GetHonorCurrency(),
 			ArenaPoints=GetArenaCurrency()
-			};
+		};
 		structHonor["Session"]={HK=sessionHK,CP=sessionCP};
 		structHonor["Yesterday"]=wowroster.Arg2Tab("HK","CP",GetPVPYesterdayStats());
 
@@ -971,7 +1048,8 @@ function wowroster:ScanCurrency(force)
 
 	if( force or (stat["Currency"]~=GetCurrencyListSize()) ) then
 		if (not wowroster.db["Currency"]) then
-			wowroster.db["Currency"]={}; end
+			wowroster.db["Currency"]={};
+		end
 		local structCurrency = wowroster.db["Currency"];
 		local thisHeader;
 		local cnt = 0;
@@ -984,14 +1062,13 @@ function wowroster:ScanCurrency(force)
 					structCurrency[thisHeader]={};
 				else
 					if ( extraCurrencyType ~= 0 ) then
-
 					end
 					GameTooltip:SetCurrencyToken(idx)
 					tooltip = wowroster.scantooltip2()
 					if( not isWatched ) then
 						isWatched=nil;
 					end
-					
+
 					structCurrency[thisHeader][name] = {
 						Name	= name,
 						Watched	= isWatched,
@@ -1034,7 +1111,8 @@ function wowroster:GetArena()
 		end
 	end
 	if (not wowroster.db["Honor"]) then
-		wowroster.db["Honor"]={}; end
+		wowroster.db["Honor"]={};
+	end
 	structHonor = wowroster.db["Honor"];
 	if(stat["Arena"]~=arenaGames) then
 		arenaGames = 0;
@@ -1042,7 +1120,8 @@ function wowroster:GetArena()
 			local key = value.size..'v'..value.size;
 			if ( value.index ) then
 				if(not structHonor[key]) then
-					structHonor[key] = {}; end
+					structHonor[key] = {};
+				end
 				local teamName, teamSize, teamRating, teamPlayed, teamWins, seasonTeamPlayed, seasonTeamWins, playerPlayed, seasonPlayerPlayed, teamRank, playerRating = GetArenaTeam(value.index);
 				structHonor[key]['Name'] = teamName;
 				structHonor[key]['Size'] = teamSize;
@@ -1066,6 +1145,7 @@ function wowroster:GetArena()
 		stat["Arena"]=arenaGames;
 	end
 end
+
 --[GetQuests]
 function wowroster:GetQuests(force)
 	if(not wowrpref["scan"]["quests"]) then
@@ -1135,7 +1215,8 @@ function wowroster:GetQuests(force)
 						Difficulty=GetDifficultyValue(questLevel),
 						Group=suggestedGroup,
 						Description=questDescription,
-						Objective=questObjective};
+						Objective=questObjective
+					};
 
 					num=GetNumQuestLeaderBoards(idx);
 					if(num and num > 0) then
@@ -1183,7 +1264,6 @@ end
 
 
 function wowroster:ScanCompanions()
---WotLK
 	if( not GetNumCompanions) then return; end
 
 	if(wowrpref["scan"]["companions"]) then
@@ -1207,8 +1287,8 @@ function wowroster:ScanCompanions()
 				stat["Companions"][companionType] = 0;
 				for companionIndex=1,numCompanions do
 					local creatureID,creatureName,spellID,icon,active = GetCompanionInfo(companionType,companionIndex);
-					if(creatureName and creatureName~=UNKNOWN) then
 
+					if(creatureName and creatureName~=UNKNOWN) then
 						GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
 						GameTooltip:SetSpellByID(spellID)
 						tooltip = wowroster.scantooltip2()
@@ -1234,7 +1314,6 @@ function wowroster:ScanCompanions()
 end
 
 function wowroster:ScanGlyphs(startGlyph)
---WotLK
 	if( not GetNumGlyphSockets) then return; end
 	numTalentGroups = GetNumTalentGroups(false, "player");
 	atg = GetActiveTalentGroup(false, "player");
@@ -1243,7 +1322,7 @@ function wowroster:ScanGlyphs(startGlyph)
 	else
 		TalentGroup = 2;
 	end
-	
+
 	if(wowrpref["scan"]["glyphs"]) then
 		if(not wowroster.db["Glyphs"]) then
 			wowroster.db["Glyphs"]={};
@@ -1256,13 +1335,12 @@ function wowroster:ScanGlyphs(startGlyph)
 			numGlyphs=startGlyph;
 			stat["Glyphs"] = stat["Glyphs"]-1;
 		end
-		
+
 		if( startGlyph==numGlyphs or stat["Glyphs"]==0 ) then
 			local structGlyph=wowroster.db["Glyphs"];
 			for index=startGlyph,numGlyphs do
 				local enabled, glyphType, glyphTooltipIndex, glyphSpell, icon = GetGlyphSocketInfo(index);
 				if(enabled == 1 and glyphSpell) then
-					
 					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
 					GameTooltip:SetGlyph(index);
 					tooltip = wowroster.scantooltip2()
@@ -1281,16 +1359,15 @@ function wowroster:ScanGlyphs(startGlyph)
 			end
 			wowroster.db["timestamp"]["Glyphs"]=time();
 		end
-		
-		
-	if (numTalentGroups==2 and wowrpref["scan"]["dsglyphs"]) then	
-		if( not startGlyph ) then
-			startGlyph = 1;
-			numGlyphs=GetNumGlyphSockets();
-		else
-			numGlyphs=startGlyph;
-			stat["Glyphs"] = stat["Glyphs"]-1;
-		end
+
+		if (numTalentGroups==2 and wowrpref["scan"]["dsglyphs"]) then	
+			if( not startGlyph ) then
+				startGlyph = 1;
+				numGlyphs=GetNumGlyphSockets();
+			else
+				numGlyphs=startGlyph;
+				stat["Glyphs"] = stat["Glyphs"]-1;
+			end
 
 			local structGlyphs={};
 			for index=1, GetNumGlyphSockets() do
@@ -1316,13 +1393,12 @@ function wowroster:ScanGlyphs(startGlyph)
 			wowroster.db["DualSpec"]["Glyphs"]=structGlyphs;
 			wowroster.db["timestamp"]["Glyphs"]=time();
 		end
-		
+
 	elseif(wowroster.db) then
 		wowroster.db["Glyphs"] = nil;
 		stat["Glyphs"] = 0;
 	end
 end
-
 
 function wowroster:GetEquipment(force)
 	if(not wowrpref["scan"]["equipment"]) then
@@ -1330,26 +1406,26 @@ function wowroster:GetEquipment(force)
 		return;
 	end
 
-		wowroster.db["Equipment"]={};
-		stat["Equipment"] = 0;
+	wowroster.db["Equipment"]={};
+	stat["Equipment"] = 0;
 
-		local structEquip=wowroster.db["Equipment"];
-		for index,slot in pairs(UnitSlots) do
-			local itemLink,itemCount;
-			local itemTexture = GetInventoryItemTexture("player",index);
-			local headSlot = getglobal("Character"..slot);
+	local structEquip=wowroster.db["Equipment"];
+	for index,slot in pairs(UnitSlots) do
+		local itemLink,itemCount;
+		local itemTexture = GetInventoryItemTexture("player",index);
+		local headSlot = getglobal("Character"..slot);
 
-			itemLink = GetInventoryItemLink("player",index);
-			if(itemLink) then
-				itemCount=GetInventoryItemCount("player",index);
-				if(itemCount == 1) then itemCount=nil; end
+		itemLink = GetInventoryItemLink("player",index);
+		if(itemLink) then
+			itemCount=GetInventoryItemCount("player",index);
+			if(itemCount == 1) then itemCount=nil; end
 
-				structEquip[slot]=wowroster:ScanItemInfo(itemLink,itemTexture,itemCount,index,"player");
-				stat["Equipment"]=stat["Equipment"]+1;
-				itemLink=nil;
-			end
+			structEquip[slot]=wowroster:ScanItemInfo(itemLink,itemTexture,itemCount,index,"player");
+			stat["Equipment"]=stat["Equipment"]+1;
+			itemLink=nil;
 		end
-		wowroster.db["timestamp"]["Equipment"]=time();
+	end
+	wowroster.db["timestamp"]["Equipment"]=time();
 
 	self:GetStats(self.db);
 end
@@ -1369,140 +1445,140 @@ wowroster.UnitHasResSickness = function(unit)
 end
 
 function wowroster:GetStats(structStats,unit)
-		unit = unit or "player";
-		if( unit=="player" and (UnitIsDeadOrGhost("player") or wowroster.UnitHasResSickness("player")) ) then
-			return
-		end
-		if(not structStats["Attributes"]) then structStats["Attributes"]={}; end
-		structStats["Level"]=UnitLevel(unit);
-		structStats["Health"]=UnitHealthMax(unit);
-		structStats["Mana"]=UnitPowerMax(unit);
-		structStats["Power"]=UnitPower[UnitPowerType(unit)];
-		structStats["Attributes"]["Stats"]={};
-		for i=1,table.getn(UnitStatName) do
-			local stat,effectiveStat,posBuff,negBuff=UnitStat(unit,i);
-			structStats["Attributes"]["Stats"][UnitStatName[i]] = strjoin(":", (stat - posBuff - negBuff),posBuff,negBuff);
-		end
-		local base,posBuff,negBuff,modBuff,effBuff,stat;
-		base,modBuff = UnitDefense(unit);
-		posBuff,negBuff = 0,0;
-		if ( modBuff > 0 ) then
-			posBuff = modBuff;
-		elseif ( modBuff < 0 ) then
-			negBuff = modBuff;
-		end
-		structStats["Attributes"]["Defense"] = {};
-		structStats["Attributes"]["Defense"]["Defense"] = strjoin(":", base,posBuff,negBuff);
-		base,effBuff,stat,posBuff,negBuff=UnitArmor(unit);
-		structStats["Attributes"]["Defense"]["Armor"] = strjoin(":", base,posBuff,negBuff);
-		structStats["Attributes"]["Defense"]["ArmorReduction"] = PaperDollFrame_GetArmorReduction(effBuff, UnitLevel("player"));
-		base,posBuff,negBuff = GetCombatRating(CR_DEFENSE_SKILL),wowroster.round(GetCombatRatingBonus(CR_DEFENSE_SKILL),2),0;
-		structStats["Attributes"]["Defense"]["DefenseRating"]=strjoin(":", base,posBuff,negBuff);
-		structStats["Attributes"]["Defense"]["DefensePercent"]=GetCombatRatingBonus(CR_DEFENSE_SKILL);--GetDodgeBlockParryChanceFromDefense();
-		base,posBuff,negBuff = GetCombatRating(CR_DODGE),wowroster.round(GetCombatRatingBonus(CR_DODGE),2),0;
-		structStats["Attributes"]["Defense"]["DodgeRating"]=strjoin(":", base,posBuff,negBuff);
-		structStats["Attributes"]["Defense"]["DodgeChance"]=wowroster.round(GetDodgeChance(),2);
-		base,posBuff,negBuff = GetCombatRating(CR_BLOCK),wowroster.round(GetCombatRatingBonus(CR_BLOCK),2),0;
-		structStats["Attributes"]["Defense"]["BlockRating"]=strjoin(":", base,posBuff,negBuff);
-		structStats["Attributes"]["Defense"]["BlockChance"]=wowroster.round(GetBlockChance(),2);
-		base,posBuff,negBuff = GetCombatRating(CR_PARRY),wowroster.round(GetCombatRatingBonus(CR_PARRY),2),0;
-		structStats["Attributes"]["Defense"]["ParryRating"]=strjoin(":", base,posBuff,negBuff);
-		structStats["Attributes"]["Defense"]["ParryChance"]=wowroster.round(GetParryChance(),2);
-		structStats["Attributes"]["Defense"]["Resilience"]={};
-		structStats["Attributes"]["Defense"]["Resilience"]["Melee"]=GetCombatRating(COMBAT_RATING_RESILIENCE_CRIT_TAKEN);
-
-		structStats["Attributes"]["Resists"]={};
-		for i=1,table.getn(UnitResistanceName) do
-			local base,resistance,positive,negative=UnitResistance(unit,i);
-			structStats["Attributes"]["Resists"][UnitResistanceName[i]] = strjoin(":", base,positive,negative);
-		end
-		if(unit=="player") then
-			structStats["Hearth"]=GetBindLocation();
-			structStats["Money"]=wowroster.Arg2Tab("Gold","Silver","Copper",wowroster.parseMoney(GetMoney()));
-			structStats["IsResting"]=IsResting() == 1 or false;
-			structStats["Experience"]=strjoin(":", UnitXP("player"),UnitXPMax("player"),GetXPExhaustion() or 0);
-			self:GetAttackRating(structStats["Attributes"],unit);
-			wowroster.db["timestamp"]["Attributes"]=time();
-		else
-			self:GetAttackRatingOld(structStats["Attributes"],unit,"Pet");
-		end
-
+	unit = unit or "player";
+	if( unit=="player" and (UnitIsDeadOrGhost("player") or wowroster.UnitHasResSickness("player")) ) then
+		return
 	end
-
-	function wowroster:CharacterDamageFrame(damageFrame)
-		damageFrame = damageFrame or getglobal("PlayerStatFrameLeft1StatText");
-		if (not damageFrame.damage) then return; end
-		wowroster.tooltip:ClearLines();
-		-- Main hand weapon
-		wowroster.tooltip:SetText(INVTYPE_WEAPONMAINHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-		wowroster.tooltip:AddDoubleLine(ATTACK_SPEED_COLON, format("%.2f", damageFrame.attackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		wowroster.tooltip:AddDoubleLine(DAMAGE_COLON, damageFrame.damage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		wowroster.tooltip:AddDoubleLine(DAMAGE_PER_SECOND, format("%.1f", damageFrame.dps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		-- Check for offhand weapon
-		if ( damageFrame.offhandAttackSpeed ) then
-			wowroster.tooltip:AddLine("\n");
-			wowroster.tooltip:AddLine(INVTYPE_WEAPONOFFHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-			wowroster.tooltip:AddDoubleLine(ATTACK_SPEED_COLON, format("%.2f", damageFrame.offhandAttackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-			wowroster.tooltip:AddDoubleLine(DAMAGE_COLON, damageFrame.offhandDamage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-			wowroster.tooltip:AddDoubleLine(DAMAGE_PER_SECOND, format("%.1f", damageFrame.offhandDps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		end
+	if(not structStats["Attributes"]) then
+		structStats["Attributes"]={};
 	end
-
-	function wowroster:CharacterRangedDamageFrame(damageFrame)
-		damageFrame = damageFrame or getglobal("PlayerStatFrameLeft1");
-		if (not damageFrame.damage) then return; end
-		wowroster.tooltip:ClearLines();
-		wowroster.tooltip:SetText(INVTYPE_RANGED, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-		wowroster.tooltip:AddDoubleLine(ATTACK_SPEED_COLON, format("%.2f", damageFrame.attackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		wowroster.tooltip:AddDoubleLine(DAMAGE_COLON, damageFrame.damage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		wowroster.tooltip:AddDoubleLine(DAMAGE_PER_SECOND, format("%.1f", damageFrame.dps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	structStats["Level"]=UnitLevel(unit);
+	structStats["Health"]=UnitHealthMax(unit);
+	structStats["Mana"]=UnitPowerMax(unit);
+	structStats["Power"]=UnitPower[UnitPowerType(unit)];
+	structStats["Attributes"]["Stats"]={};
+	for i=1,table.getn(UnitStatName) do
+		local stat,effectiveStat,posBuff,negBuff=UnitStat(unit,i);
+		structStats["Attributes"]["Stats"][UnitStatName[i]] = strjoin(":", (stat - posBuff - negBuff),posBuff,negBuff);
 	end
+	local base,posBuff,negBuff,modBuff,effBuff,stat;
+	base,modBuff = UnitDefense(unit);
+	posBuff,negBuff = 0,0;
+	if ( modBuff > 0 ) then
+		posBuff = modBuff;
+	elseif ( modBuff < 0 ) then
+		negBuff = modBuff;
+	end
+	structStats["Attributes"]["Defense"] = {};
+	structStats["Attributes"]["Defense"]["Defense"] = strjoin(":", base,posBuff,negBuff);
+	base,effBuff,stat,posBuff,negBuff=UnitArmor(unit);
+	structStats["Attributes"]["Defense"]["Armor"] = strjoin(":", base,posBuff,negBuff);
+	structStats["Attributes"]["Defense"]["ArmorReduction"] = PaperDollFrame_GetArmorReduction(effBuff, UnitLevel("player"));
+	base,posBuff,negBuff = GetCombatRating(CR_DEFENSE_SKILL),wowroster.round(GetCombatRatingBonus(CR_DEFENSE_SKILL),2),0;
+	structStats["Attributes"]["Defense"]["DefenseRating"]=strjoin(":", base,posBuff,negBuff);
+	structStats["Attributes"]["Defense"]["DefensePercent"]=GetCombatRatingBonus(CR_DEFENSE_SKILL);--GetDodgeBlockParryChanceFromDefense();
+	base,posBuff,negBuff = GetCombatRating(CR_DODGE),wowroster.round(GetCombatRatingBonus(CR_DODGE),2),0;
+	structStats["Attributes"]["Defense"]["DodgeRating"]=strjoin(":", base,posBuff,negBuff);
+	structStats["Attributes"]["Defense"]["DodgeChance"]=wowroster.round(GetDodgeChance(),2);
+	base,posBuff,negBuff = GetCombatRating(CR_BLOCK),wowroster.round(GetCombatRatingBonus(CR_BLOCK),2),0;
+	structStats["Attributes"]["Defense"]["BlockRating"]=strjoin(":", base,posBuff,negBuff);
+	structStats["Attributes"]["Defense"]["BlockChance"]=wowroster.round(GetBlockChance(),2);
+	base,posBuff,negBuff = GetCombatRating(CR_PARRY),wowroster.round(GetCombatRatingBonus(CR_PARRY),2),0;
+	structStats["Attributes"]["Defense"]["ParryRating"]=strjoin(":", base,posBuff,negBuff);
+	structStats["Attributes"]["Defense"]["ParryChance"]=wowroster.round(GetParryChance(),2);
+	structStats["Attributes"]["Defense"]["Resilience"]={};
+	structStats["Attributes"]["Defense"]["Resilience"]["Melee"]=GetCombatRating(COMBAT_RATING_RESILIENCE_CRIT_TAKEN);
 
-	function wowroster:GetAttackRating(structAttack,unit,prefix)
-		unit = unit or "player";
-		prefix = prefix or "PlayerStatFrameLeft";
+	structStats["Attributes"]["Resists"]={};
+	for i=1,table.getn(UnitResistanceName) do
+		local base,resistance,positive,negative=UnitResistance(unit,i);
+		structStats["Attributes"]["Resists"][UnitResistanceName[i]] = strjoin(":", base,positive,negative);
+	end
+	if(unit=="player") then
+		structStats["Hearth"]=GetBindLocation();
+		structStats["Money"]=wowroster.Arg2Tab("Gold","Silver","Copper",wowroster.parseMoney(GetMoney()));
+		structStats["IsResting"]=IsResting() == 1 or false;
+		structStats["Experience"]=strjoin(":", UnitXP("player"),UnitXPMax("player"),GetXPExhaustion() or 0);
+		self:GetAttackRating(structStats["Attributes"],unit);
+		wowroster.db["timestamp"]["Attributes"]=time();
+	else
+		self:GetAttackRatingOld(structStats["Attributes"],unit,"Pet");
+	end
+end
 
-		local stat = getglobal(prefix.."1");
-		local stat1 = getglobal(prefix..1)          
-		local stat2 = getglobal(prefix..2)          
-		local stat3 = getglobal(prefix..3)          
-		local stat4 = getglobal(prefix..4)          
-		local stat5 = getglobal(prefix..5)          
-		local stat6 = getglobal(prefix..6)  
+function wowroster:CharacterDamageFrame(damageFrame)
+	damageFrame = damageFrame or getglobal("PlayerStatFrameLeft1StatText");
+	if (not damageFrame.damage) then return; end
+	wowroster.tooltip:ClearLines();
+	-- Main hand weapon
+	wowroster.tooltip:SetText(INVTYPE_WEAPONMAINHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	wowroster.tooltip:AddDoubleLine(ATTACK_SPEED_COLON, format("%.2f", damageFrame.attackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	wowroster.tooltip:AddDoubleLine(DAMAGE_COLON, damageFrame.damage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	wowroster.tooltip:AddDoubleLine(DAMAGE_PER_SECOND, format("%.1f", damageFrame.dps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	-- Check for offhand weapon
+	if ( damageFrame.offhandAttackSpeed ) then
+		wowroster.tooltip:AddLine("\n");
+		wowroster.tooltip:AddLine(INVTYPE_WEAPONOFFHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+		wowroster.tooltip:AddDoubleLine(ATTACK_SPEED_COLON, format("%.2f", damageFrame.offhandAttackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		wowroster.tooltip:AddDoubleLine(DAMAGE_COLON, damageFrame.offhandDamage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		wowroster.tooltip:AddDoubleLine(DAMAGE_PER_SECOND, format("%.1f", damageFrame.offhandDps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+end
 
-		local mainHandAttackBase,mainHandAttackMod,offHandAttackBase,offHandAttackMod = UnitAttackBothHands(unit);
-		local speed,offhandSpeed = UnitAttackSpeed(unit);
-		local minDamage;
-		local maxDamage; 
-		local minOffHandDamage;
-		local maxOffHandDamage; 
-		local physicalBonusPos;
-		local physicalBonusNeg;
-		local percent;
-		minDamage, maxDamage, minOffHandDamage, maxOffHandDamage, physicalBonusPos, physicalBonusNeg, percent = UnitDamage(unit);
-		local displayMin = max(floor(minDamage),1);
-		local displayMax = max(ceil(maxDamage),1);
+function wowroster:CharacterRangedDamageFrame(damageFrame)
+	damageFrame = damageFrame or getglobal("PlayerStatFrameLeft1");
+	if (not damageFrame.damage) then return; end
+	wowroster.tooltip:ClearLines();
+	wowroster.tooltip:SetText(INVTYPE_RANGED, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	wowroster.tooltip:AddDoubleLine(ATTACK_SPEED_COLON, format("%.2f", damageFrame.attackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	wowroster.tooltip:AddDoubleLine(DAMAGE_COLON, damageFrame.damage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	wowroster.tooltip:AddDoubleLine(DAMAGE_PER_SECOND, format("%.1f", damageFrame.dps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+end
 
-		minDamage = (minDamage / percent) - physicalBonusPos - physicalBonusNeg;
-		maxDamage = (maxDamage / percent) - physicalBonusPos - physicalBonusNeg;
+function wowroster:GetAttackRating(structAttack,unit,prefix)
+	unit = unit or "player";
+	prefix = prefix or "PlayerStatFrameLeft";
 
-		local baseDamage = (minDamage + maxDamage) * 0.5;
-		local fullDamage = (baseDamage + physicalBonusPos + physicalBonusNeg) * percent;
-		local totalBonus = (fullDamage - baseDamage);
-		local damagePerSecond = (max(fullDamage,1) / speed);
-	
-		structAttack["Melee"]={};
-		structAttack["Melee"]["Expertise"]=GetExpertise();
-		structAttack["Melee"]["MainHand"]={};
-		structAttack["Melee"]["MainHand"]["AttackSpeed"]=wowroster.round(speed,2);
-		structAttack["Melee"]["MainHand"]["AttackDPS"]=wowroster.Percent(damagePerSecond);--wowroster.round(stat.dps,1);
-		structAttack["Melee"]["MainHand"]["AttackSkill"]=mainHandAttackBase+mainHandAttackMod;
-		structAttack["Melee"]["MainHand"]["AttackRating"]=strjoin(":", wowroster.Percent(mainHandAttackBase),wowroster.Percent(mainHandAttackMod),0);
+	local stat = getglobal(prefix.."1");
+	local stat1 = getglobal(prefix..1)          
+	local stat2 = getglobal(prefix..2)          
+	local stat3 = getglobal(prefix..3)          
+	local stat4 = getglobal(prefix..4)          
+	local stat5 = getglobal(prefix..5)          
+	local stat6 = getglobal(prefix..6)  
 
-		structAttack["Melee"]["MainHand"]["DamageRangeBase"]=strjoin(":",wowroster.Percent(minDamage),wowroster.Percent(maxDamage));
+	local mainHandAttackBase,mainHandAttackMod,offHandAttackBase,offHandAttackMod = UnitAttackBothHands(unit);
+	local speed,offhandSpeed = UnitAttackSpeed(unit);
+	local minDamage;
+	local maxDamage; 
+	local minOffHandDamage;
+	local maxOffHandDamage; 
+	local physicalBonusPos;
+	local physicalBonusNeg;
+	local percent;
+	minDamage, maxDamage, minOffHandDamage, maxOffHandDamage, physicalBonusPos, physicalBonusNeg, percent = UnitDamage(unit);
+	local displayMin = max(floor(minDamage),1);
+	local displayMax = max(ceil(maxDamage),1);
 
-		if ( offhandSpeed ) then
-		
+	minDamage = (minDamage / percent) - physicalBonusPos - physicalBonusNeg;
+	maxDamage = (maxDamage / percent) - physicalBonusPos - physicalBonusNeg;
+
+	local baseDamage = (minDamage + maxDamage) * 0.5;
+	local fullDamage = (baseDamage + physicalBonusPos + physicalBonusNeg) * percent;
+	local totalBonus = (fullDamage - baseDamage);
+	local damagePerSecond = (max(fullDamage,1) / speed);
+
+	structAttack["Melee"]={};
+	structAttack["Melee"]["Expertise"]=GetExpertise();
+	structAttack["Melee"]["MainHand"]={};
+	structAttack["Melee"]["MainHand"]["AttackSpeed"]=wowroster.round(speed,2);
+	structAttack["Melee"]["MainHand"]["AttackDPS"]=wowroster.Percent(damagePerSecond);--wowroster.round(stat.dps,1);
+	structAttack["Melee"]["MainHand"]["AttackSkill"]=mainHandAttackBase+mainHandAttackMod;
+	structAttack["Melee"]["MainHand"]["AttackRating"]=strjoin(":", wowroster.Percent(mainHandAttackBase),wowroster.Percent(mainHandAttackMod),0);
+
+	structAttack["Melee"]["MainHand"]["DamageRangeBase"]=strjoin(":",wowroster.Percent(minDamage),wowroster.Percent(maxDamage));
+
+	if ( offhandSpeed ) then
 		minOffHandDamage = (minOffHandDamage / percent) - physicalBonusPos - physicalBonusNeg;
 		maxOffHandDamage = (maxOffHandDamage / percent) - physicalBonusPos - physicalBonusNeg;
 
@@ -1510,48 +1586,46 @@ function wowroster:GetStats(structStats,unit)
 		local offhandFullDamage = (offhandBaseDamage + physicalBonusPos + physicalBonusNeg) * percent;
 		local offhandDamagePerSecond = (max(offhandFullDamage,1) / offhandSpeed);
 		local offhandTotalBonus = (offhandFullDamage - offhandBaseDamage);
-		
-		
-			structAttack["Melee"]["OffHand"]={};
-			structAttack["Melee"]["OffHand"]["AttackSpeed"]=wowroster.round(offhandSpeed,2);
-			structAttack["Melee"]["OffHand"]["AttackDPS"]=offhandDamagePerSecond;--wowroster.round(stat.offhandDps,1);
-			structAttack["Melee"]["OffHand"]["AttackSkill"]=offHandAttackBase+offHandAttackMod;
-			structAttack["Melee"]["OffHand"]["AttackRating"]=strjoin(":", offHandAttackBase,offHandAttackMod,0);
 
+		structAttack["Melee"]["OffHand"]={};
+		structAttack["Melee"]["OffHand"]["AttackSpeed"]=wowroster.round(offhandSpeed,2);
+		structAttack["Melee"]["OffHand"]["AttackDPS"]=offhandDamagePerSecond;--wowroster.round(stat.offhandDps,1);
+		structAttack["Melee"]["OffHand"]["AttackSkill"]=offHandAttackBase+offHandAttackMod;
+		structAttack["Melee"]["OffHand"]["AttackRating"]=strjoin(":", offHandAttackBase,offHandAttackMod,0);
+	else
+		structAttack["Melee"]["OffHand"]=nil;
+	end
+
+	local stat4 = getglobal(prefix.."4");
+	local base,posBuff,negBuff;
+	base,posBuff,negBuff = UnitAttackPower(unit);
+	structAttack["Melee"]["AttackPower"] = strjoin(":", base,posBuff,negBuff);
+	structAttack["Melee"]["AttackPowerDPS"]=wowroster.round(max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER,1);
+	--structAttack["Melee"]["AttackPowerTooltip"]=stat4.tooltip2;
+	base,posBuff,negBuff = GetCombatRating(CR_EXPERTISE),wowroster.round(GetCombatRatingBonus(CR_EXPERTISE),2),0;
+	structAttack["Melee"]["Expertise"]=strjoin(":", base,posBuff,negBuff);
+	base,posBuff,negBuff = GetCombatRating(CR_HIT_MELEE),wowroster.round(GetCombatRatingBonus(CR_HIT_MELEE),2),0;
+	structAttack["Melee"]["HitRating"]=strjoin(":", base,posBuff,negBuff);
+	base,posBuff,negBuff = GetCombatRating(CR_CRIT_MELEE),wowroster.round(GetCombatRatingBonus(CR_CRIT_MELEE),2),0;
+	structAttack["Melee"]["CritRating"]=strjoin(":", base,posBuff,negBuff);
+	base,posBuff,negBuff = GetCombatRating(CR_HASTE_MELEE),wowroster.round(GetCombatRatingBonus(CR_HASTE_MELEE),2),0;
+	structAttack["Melee"]["HasteRating"]=strjoin(":", base,posBuff,negBuff);
+
+	structAttack["Melee"]["CritChance"]=wowroster.round(GetCritChance(),2);
+
+	if(unit=="player") then
+		if ( not GetInventoryItemTexture(unit,18) and not UnitHasRelicSlot(unit)) then
+			structAttack["Ranged"]=nil;
 		else
-			structAttack["Melee"]["OffHand"]=nil;
-		end
-		local stat4 = getglobal(prefix.."4");
-		local base,posBuff,negBuff;
-		base,posBuff,negBuff = UnitAttackPower(unit);
-		structAttack["Melee"]["AttackPower"] = strjoin(":", base,posBuff,negBuff);
-		structAttack["Melee"]["AttackPowerDPS"]=wowroster.round(max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER,1);
-		--structAttack["Melee"]["AttackPowerTooltip"]=stat4.tooltip2;
-		base,posBuff,negBuff = GetCombatRating(CR_EXPERTISE),wowroster.round(GetCombatRatingBonus(CR_EXPERTISE),2),0;
-		structAttack["Melee"]["Expertise"]=strjoin(":", base,posBuff,negBuff);
-		base,posBuff,negBuff = GetCombatRating(CR_HIT_MELEE),wowroster.round(GetCombatRatingBonus(CR_HIT_MELEE),2),0;
-		structAttack["Melee"]["HitRating"]=strjoin(":", base,posBuff,negBuff);
-		base,posBuff,negBuff = GetCombatRating(CR_CRIT_MELEE),wowroster.round(GetCombatRatingBonus(CR_CRIT_MELEE),2),0;
-		structAttack["Melee"]["CritRating"]=strjoin(":", base,posBuff,negBuff);
-		base,posBuff,negBuff = GetCombatRating(CR_HASTE_MELEE),wowroster.round(GetCombatRatingBonus(CR_HASTE_MELEE),2),0;
-		structAttack["Melee"]["HasteRating"]=strjoin(":", base,posBuff,negBuff);
+			--UpdatePaperdollStats(prefix, "PLAYERSTAT_RANGED_COMBAT");
+			local damageFrame = getglobal(prefix.."1");
+			local damageFrameText = getglobal(prefix.."1".."StatText");
 
-		structAttack["Melee"]["CritChance"]=wowroster.round(GetCritChance(),2);
-
-		if(unit=="player") then
-			if ( not GetInventoryItemTexture(unit,18) and not UnitHasRelicSlot(unit)) then
+			if(PaperDollFrame.noRanged) then
 				structAttack["Ranged"]=nil;
 			else
-				--UpdatePaperdollStats(prefix, "PLAYERSTAT_RANGED_COMBAT");
-				local damageFrame = getglobal(prefix.."1");
-				local damageFrameText = getglobal(prefix.."1".."StatText");
-
-				if(PaperDollFrame.noRanged) then
-					structAttack["Ranged"]=nil;
-				else
-				
 				local rangedAttackSpeed, minDamage, maxDamage, physicalBonusPos, physicalBonusNeg, percent = UnitRangedDamage(unit);
-	
+
 				-- Round to the third decimal place (i.e. 99.9 percent)
 				percent = math.floor(percent  * 10^3 + 0.5) / 10^3
 				local displayMin = max(floor(minDamage),1);
@@ -1588,107 +1662,107 @@ function wowroster:GetStats(structStats,unit)
 					end
 					tooltip = max(floor(minDamage),1).." - "..max(ceil(maxDamage),1);
 				end
-	
-	
-					local rangedAttackSpeed,minDamage,maxDamage,physicalBonusPos,physicalBonusNeg,percent = UnitRangedDamage(unit);
-					structAttack["Ranged"]={};
-					structAttack["Ranged"]["AttackSpeed"]=wowroster.round(rangedAttackSpeed,2);
-					structAttack["Ranged"]["AttackDPS"]=wowroster.round(damagePerSecond,1);
-					structAttack["Ranged"]["AttackSkill"]=UnitRangedAttack(unit);
-					local rangedAttackBase,rangedAttackMod = UnitRangedAttack(unit);
-					structAttack["Ranged"]["AttackRating"]=strjoin(":", rangedAttackBase,rangedAttackMod,0);
 
-					structAttack["Ranged"]["DamageRangeBase"]=strjoin(":", wowroster.Percent(minDamage),wowroster.Percent(maxDamage));
-					structAttack["Ranged"]["DamageRangeBonus"]=totalBonus;
+				local rangedAttackSpeed,minDamage,maxDamage,physicalBonusPos,physicalBonusNeg,percent = UnitRangedDamage(unit);
+				structAttack["Ranged"]={};
+				structAttack["Ranged"]["AttackSpeed"]=wowroster.round(rangedAttackSpeed,2);
+				structAttack["Ranged"]["AttackDPS"]=wowroster.round(damagePerSecond,1);
+				structAttack["Ranged"]["AttackSkill"]=UnitRangedAttack(unit);
 
-					base,posBuff,negBuff = GetCombatRating(CR_HIT_RANGED),wowroster.round(GetCombatRatingBonus(CR_HIT_RANGED),2),0;
-					structAttack["Ranged"]["HitRating"]=strjoin(":", base,posBuff,negBuff);
-					base,posBuff,negBuff = GetCombatRating(CR_CRIT_RANGED),wowroster.round(GetCombatRatingBonus(CR_CRIT_RANGED),2),0;
-					structAttack["Ranged"]["CritRating"]=strjoin(":", base,posBuff,negBuff);
-					base,posBuff,negBuff = GetCombatRating(CR_HASTE_RANGED),wowroster.round(GetCombatRatingBonus(CR_HASTE_RANGED),2),0;
-					structAttack["Ranged"]["HasteRating"]=strjoin(":", base,posBuff,negBuff);
-					structAttack["Ranged"]["CritChance"]=wowroster.round(GetRangedCritChance(),2);
+				local rangedAttackBase,rangedAttackMod = UnitRangedAttack(unit);
+				structAttack["Ranged"]["AttackRating"]=strjoin(":", rangedAttackBase,rangedAttackMod,0);
 
-					structAttack["Ranged"]["DamageRangeTooltip"]=tooltip;
-					local base,posBuff,negBuff=UnitRangedAttackPower(unit);
-					apDPS=base/ATTACK_POWER_MAGIC_NUMBER;
-					structAttack["Ranged"]["AttackPower"] = strjoin(":", base,posBuff,negBuff);
-					structAttack["Ranged"]["AttackPowerDPS"]=wowroster.round(apDPS,1);
-					structAttack["Ranged"]["AttackPowerTooltip"]=format(RANGED_ATTACK_POWER_TOOLTIP,apDPS);
-					structAttack["Ranged"]["HasWandEquipped"]=false;
-				end
+				structAttack["Ranged"]["DamageRangeBase"]=strjoin(":", wowroster.Percent(minDamage),wowroster.Percent(maxDamage));
+				structAttack["Ranged"]["DamageRangeBonus"]=totalBonus;
+
+				base,posBuff,negBuff = GetCombatRating(CR_HIT_RANGED),wowroster.round(GetCombatRatingBonus(CR_HIT_RANGED),2),0;
+				structAttack["Ranged"]["HitRating"]=strjoin(":", base,posBuff,negBuff);
+				base,posBuff,negBuff = GetCombatRating(CR_CRIT_RANGED),wowroster.round(GetCombatRatingBonus(CR_CRIT_RANGED),2),0;
+				structAttack["Ranged"]["CritRating"]=strjoin(":", base,posBuff,negBuff);
+				base,posBuff,negBuff = GetCombatRating(CR_HASTE_RANGED),wowroster.round(GetCombatRatingBonus(CR_HASTE_RANGED),2),0;
+				structAttack["Ranged"]["HasteRating"]=strjoin(":", base,posBuff,negBuff);
+				structAttack["Ranged"]["CritChance"]=wowroster.round(GetRangedCritChance(),2);
+
+				structAttack["Ranged"]["DamageRangeTooltip"]=tooltip;
+				local base,posBuff,negBuff=UnitRangedAttackPower(unit);
+				apDPS=base/ATTACK_POWER_MAGIC_NUMBER;
+				structAttack["Ranged"]["AttackPower"] = strjoin(":", base,posBuff,negBuff);
+				structAttack["Ranged"]["AttackPowerDPS"]=wowroster.round(apDPS,1);
+				structAttack["Ranged"]["AttackPowerTooltip"]=format(RANGED_ATTACK_POWER_TOOLTIP,apDPS);
+				structAttack["Ranged"]["HasWandEquipped"]=false;
 			end
-			structAttack["Spell"] = {};
-			structAttack["Spell"]["BonusHealing"] = GetSpellBonusHealing();
-			local holySchool = 2;
-			local minCrit = GetSpellCritChance(holySchool);
-			structAttack["Spell"]["School"]={};
-			structAttack["Spell"]["SchoolCrit"]={};
-			for i=holySchool,MAX_SPELL_SCHOOLS do
-				bonusDamage = GetSpellBonusDamage(i);
-				spellCrit = GetSpellCritChance(i);
-				minCrit = min(minCrit,spellCrit);
-				structAttack["Spell"]["School"][UnitSchoolName[i]] = bonusDamage;
-				structAttack["Spell"]["SchoolCrit"][UnitSchoolName[i]] = wowroster.round(spellCrit,2);
-			end
-			structAttack["Spell"]["CritChance"] = wowroster.round(minCrit,2);
-
-			structAttack["Spell"]["BonusDamage"]=GetSpellBonusDamage(holySchool);
-			base,posBuff,negBuff = GetCombatRating(CR_HIT_SPELL),wowroster.round(GetCombatRatingBonus(CR_HIT_SPELL),2),0;
-			structAttack["Spell"]["HitRating"]=strjoin(":", base,posBuff,negBuff);
-			base,posBuff,negBuff = GetCombatRating(CR_CRIT_SPELL),wowroster.round(GetCombatRatingBonus(CR_CRIT_SPELL),2),0;
-			structAttack["Spell"]["CritRating"]=strjoin(":", base,posBuff,negBuff);
-			base,posBuff,negBuff = GetCombatRating(CR_HASTE_SPELL),wowroster.round(GetCombatRatingBonus(CR_HASTE_SPELL),2),0;
-			structAttack["Spell"]["HasteRating"]=strjoin(":", base,posBuff,negBuff);
-			structAttack["Spell"]["Penetration"] = GetSpellPenetration();
-			local base,casting = GetManaRegen();
-			base = floor( (base * 5.0) + 0.5);
-			casting = floor( (casting * 5.0) + 0.5);
-			structAttack["Spell"]["ManaRegen"] = strjoin(":", base,casting);
 		end
-		PaperDollFrame_UpdateStats();
-	end
 
-	function wowroster.Percent(percent)
-	
+		structAttack["Spell"] = {};
+		structAttack["Spell"]["BonusHealing"] = GetSpellBonusHealing();
+
+		local holySchool = 2;
+		local minCrit = GetSpellCritChance(holySchool);
+		structAttack["Spell"]["School"]={};
+		structAttack["Spell"]["SchoolCrit"]={};
+		for i=holySchool,MAX_SPELL_SCHOOLS do
+			bonusDamage = GetSpellBonusDamage(i);
+			spellCrit = GetSpellCritChance(i);
+			minCrit = min(minCrit,spellCrit);
+			structAttack["Spell"]["School"][UnitSchoolName[i]] = bonusDamage;
+			structAttack["Spell"]["SchoolCrit"][UnitSchoolName[i]] = wowroster.round(spellCrit,2);
+		end
+
+		structAttack["Spell"]["CritChance"] = wowroster.round(minCrit,2);
+		structAttack["Spell"]["BonusDamage"]=GetSpellBonusDamage(holySchool);
+		base,posBuff,negBuff = GetCombatRating(CR_HIT_SPELL),wowroster.round(GetCombatRatingBonus(CR_HIT_SPELL),2),0;
+		structAttack["Spell"]["HitRating"]=strjoin(":", base,posBuff,negBuff);
+		base,posBuff,negBuff = GetCombatRating(CR_CRIT_SPELL),wowroster.round(GetCombatRatingBonus(CR_CRIT_SPELL),2),0;
+		structAttack["Spell"]["CritRating"]=strjoin(":", base,posBuff,negBuff);
+		base,posBuff,negBuff = GetCombatRating(CR_HASTE_SPELL),wowroster.round(GetCombatRatingBonus(CR_HASTE_SPELL),2),0;
+		structAttack["Spell"]["HasteRating"]=strjoin(":", base,posBuff,negBuff);
+		structAttack["Spell"]["Penetration"] = GetSpellPenetration();
+
+		local base,casting = GetManaRegen();
+		base = floor( (base * 5.0) + 0.5);
+		casting = floor( (casting * 5.0) + 0.5);
+		structAttack["Spell"]["ManaRegen"] = strjoin(":", base,casting);
+	end
+	PaperDollFrame_UpdateStats();
+end
+
+function wowroster.Percent(percent)
 	percent = math.floor(percent  * 10^3 + 0.5) / 10^3
-	
 	return percent;
-	
-	end
-	
-	function wowroster:GetAttackRatingOld(structAttack,unit,prefix)
-		if(not unit) then unit="pet"; end
-		if(not prefix) then prefix="Pet"; end
+end
 
-		PaperDollFrame_SetDamage(PetDamageFrame, "Pet");
-		PaperDollFrame_SetArmor(PetArmorFrame, "Pet");
-		PaperDollFrame_SetAttackPower(PetAttackPowerFrame, "Pet");
+function wowroster:GetAttackRatingOld(structAttack,unit,prefix)
+	if(not unit) then unit="pet"; end
+	if(not prefix) then prefix="Pet"; end
 
-		local damageFrame = getglobal(prefix.."DamageFrame");
-		local damageText = getglobal(prefix.."DamageFrameStatText");
-		local mainHandAttackBase,mainHandAttackMod = UnitAttackBothHands(unit);
+	PaperDollFrame_SetDamage(PetDamageFrame, "Pet");
+	PaperDollFrame_SetArmor(PetArmorFrame, "Pet");
+	PaperDollFrame_SetAttackPower(PetAttackPowerFrame, "Pet");
 
-		structAttack["Melee"]={};
-		structAttack["Melee"]["MainHand"]={};
-		structAttack["Melee"]["MainHand"]["AttackSpeed"]=wowroster.round(damageFrame.attackSpeed,2);
-		structAttack["Melee"]["MainHand"]["AttackDPS"]=wowroster.round(damageFrame.dps,1);
-		structAttack["Melee"]["MainHand"]["AttackRating"]=mainHandAttackBase+mainHandAttackMod;
+	local damageFrame = getglobal(prefix.."DamageFrame");
+	local damageText = getglobal(prefix.."DamageFrameStatText");
+	local mainHandAttackBase,mainHandAttackMod = UnitAttackBothHands(unit);
 
-		local tt=damageText:GetText();
-		tt=wowroster.StripColor(tt);
-		structAttack["Melee"]["MainHand"]["DamageRange"]=string.gsub(tt,"^(%d+)%s?-%s?(%d+)$","%1:%2");
+	structAttack["Melee"]={};
+	structAttack["Melee"]["MainHand"]={};
+	structAttack["Melee"]["MainHand"]["AttackSpeed"]=wowroster.round(damageFrame.attackSpeed,2);
+	structAttack["Melee"]["MainHand"]["AttackDPS"]=wowroster.round(damageFrame.dps,1);
+	structAttack["Melee"]["MainHand"]["AttackRating"]=mainHandAttackBase+mainHandAttackMod;
 
-		self:CharacterDamageFrame();
-		local tt=wowroster.scantooltip2();
-		tt=wowroster.StripColor(tt);
-		structAttack["Melee"]["DamageRangeTooltip"]=tt;
-		local base,posBuff,negBuff = UnitAttackPower(unit);
-		apDPS=max((base+posBuff+negBuff),0)/ATTACK_POWER_MAGIC_NUMBER;
-		structAttack["Melee"]["AttackPower"] = strjoin(":", base,posBuff,negBuff);
-		structAttack["Melee"]["AttackPowerDPS"]=wowroster.round(apDPS,1);
-		structAttack["Melee"]["AttackPowerTooltip"]=format(MELEE_ATTACK_POWER_TOOLTIP,apDPS);
-	end
+	local tt=damageText:GetText();
+	tt=wowroster.StripColor(tt);
+	structAttack["Melee"]["MainHand"]["DamageRange"]=string.gsub(tt,"^(%d+)%s?-%s?(%d+)$","%1:%2");
+
+	self:CharacterDamageFrame();
+	local tt=wowroster.scantooltip2();
+	tt=wowroster.StripColor(tt);
+	structAttack["Melee"]["DamageRangeTooltip"]=tt;
+	local base,posBuff,negBuff = UnitAttackPower(unit);
+	apDPS=max((base+posBuff+negBuff),0)/ATTACK_POWER_MAGIC_NUMBER;
+	structAttack["Melee"]["AttackPower"] = strjoin(":", base,posBuff,negBuff);
+	structAttack["Melee"]["AttackPowerDPS"]=wowroster.round(apDPS,1);
+	structAttack["Melee"]["AttackPowerTooltip"]=format(MELEE_ATTACK_POWER_TOOLTIP,apDPS);
+end
 
 --[GetBuffs]
 function wowroster:GetBuffs(structBuffs,unit)
@@ -1745,46 +1819,51 @@ function wowroster:GetBuffs(structBuffs,unit)
 end
 
 function wowroster:SKILLS()
-
-	local prof1, prof2, a, b, c, d = GetProfessions();
+	local prof1, prof2, archaeology, fishing, cooking, firstAid = GetProfessions();
 	--local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(index)
 	skill = {};
 	skill["Secondary Skills"]={};
 	skill["Professions"]={};
+
 	if prof1 then
 		local name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier = GetProfessionInfo(prof1);
 		skill["Professions"][name] = skillLevel..":"..maxSkillLevel;
 	end
+
 	if prof2 then
-	local name2, icon2, skillLevel2, maxSkillLevel2, numAbilities2, spelloffset2, skillLine2, skillModifier2 = GetProfessionInfo(prof2);
-	skill["Professions"][name2] = skillLevel2..":"..maxSkillLevel2;
-	skill["Professions"]["Order"] = "1";
+		local name2, icon2, skillLevel2, maxSkillLevel2, numAbilities2, spelloffset2, skillLine2, skillModifier2 = GetProfessionInfo(prof2);
+		skill["Professions"][name2] = skillLevel2..":"..maxSkillLevel2;
+		skill["Professions"]["Order"] = "1";
 	end
-	if a then
-	local namea, icona, skillLevela, maxSkillLevela, numAbilitiesa, spelloffseta, skillLinea, skillModifiera = GetProfessionInfo(a);
-	skill["Secondary Skills"][namea] = skillLevela..":"..maxSkillLevela;
-	--skill["Secondary Skills"][namea]["test"] = skillLinea;
-		end
-	if b then
-	local nameb, iconb, skillLevelb, maxSkillLevelb, numAbilitiesb, spelloffsetb, skillLineb, skillModifierb = GetProfessionInfo(b);
-	skill["Secondary Skills"][nameb] = skillLevelb..":"..maxSkillLevelb;
+
+	if archaeology then
+		local namea, icona, skillLevela, maxSkillLevela, numAbilitiesa, spelloffseta, skillLinea, skillModifiera = GetProfessionInfo(archaeology);
+		skill["Secondary Skills"][namea] = skillLevela..":"..maxSkillLevela;
+		--skill["Secondary Skills"][namea]["test"] = skillLinea;
 	end
-	if c then
-	local namec, iconc, skillLevelc, maxSkillLevelc, numAbilitiesc, spelloffsetc, skillLinec, skillModifierc = GetProfessionInfo(c);
-	skill["Secondary Skills"][namec] = skillLevelc..":"..maxSkillLevelc;
+
+	if fishing then
+		local nameb, iconb, skillLevelb, maxSkillLevelb, numAbilitiesb, spelloffsetb, skillLineb, skillModifierb = GetProfessionInfo(fishing);
+		skill["Secondary Skills"][nameb] = skillLevelb..":"..maxSkillLevelb;
 	end
-	if d then
-	local named, icond, skillLeveld, maxSkillLeveld, numAbilitiesd, spelloffsetd, skillLined, skillModifierd = GetProfessionInfo(d);
-	skill["Secondary Skills"][named] = skillLeveld..":"..maxSkillLeveld;
-	skill["Secondary Skills"]["Order"] = "2";
+
+	if cooking then
+		local namec, iconc, skillLevelc, maxSkillLevelc, numAbilitiesc, spelloffsetc, skillLinec, skillModifierc = GetProfessionInfo(cooking);
+		skill["Secondary Skills"][namec] = skillLevelc..":"..maxSkillLevelc;
 	end
+
+	if firstAid then
+		local named, icond, skillLeveld, maxSkillLeveld, numAbilitiesd, spelloffsetd, skillLined, skillModifierd = GetProfessionInfo(firstAid);
+		skill["Secondary Skills"][named] = skillLeveld..":"..maxSkillLeveld;
+		skill["Secondary Skills"]["Order"] = "2";
+	end
+
 	wowroster.db["Skills"] = skill;
-	
 end
 
 function wowroster:SaveHeaders()
 	local headerCount = 0		-- use a counter to avoid being bound to header names, which might not be unique.
-	
+
 	for i = GetNumTradeSkills(), 1, -1 do		-- 1st pass, expand all categories
 		local _, skillType, _, isExpanded  = GetTradeSkillInfo(i)
 		 if (skillType == "header") then
@@ -1802,9 +1881,9 @@ function wowroster:ARCH_frame()
 	if ( not wowroster.db["Archaeology"] ) then
 		wowroster.db["Archaeology"]={};
 	end
-	
+
 	local structArch=wowroster.db["Archaeology"];
-	
+
 	local numRaces = GetNumArchaeologyRaces();
 
 	for i=1,numRaces do
@@ -1817,17 +1896,15 @@ function wowroster:ARCH_frame()
 		if( not structArch[RaceName] ) then
 			structArch[RaceName] = {};
 		end
-			
-			
+
 		Artifactlist={};
 		for artifactIndex=1,GetNumArtifactsByRace(i) do
-		local complete = nil;
-		local artifactName,artifactDesc,artifactRarity,artifactIcon,hoverDescription,keystoneCount,bgTexture,firstCompletionTime,completionCount=GetArtifactInfoByRace(i, artifactIndex);
+			local complete = nil;
+			local artifactName,artifactDesc,artifactRarity,artifactIcon,hoverDescription,keystoneCount,bgTexture,firstCompletionTime,completionCount=GetArtifactInfoByRace(i, artifactIndex);
 			SetSelectedArtifact(i, artifactIndex);--SetSelectedArtifact();
 			local name, description, rarity, icon, spellDescription, numSockets, bgTexture =  GetSelectedArtifactInfo();
-			
+
 			if (firstCompletionTime == 0) then
-			
 				ArtifactCurrent={};
 				table.insert(ArtifactCurrent,{
 					Name 			= artifactName,
@@ -1843,7 +1920,7 @@ function wowroster:ARCH_frame()
 				});
 				complete = artifactName;
 			end
-			
+
 			if (artifactName ~= complete) then
 				table.insert(Artifactlist,{
 					Name 			= artifactName,
@@ -1858,9 +1935,9 @@ function wowroster:ARCH_frame()
 					BGTexture 		= wowroster.scanIcon(bgTexture),
 				});
 			end
-		
+
 		end
-		
+
 		structArch[RaceName] = {
 			Name 			= RaceName,
 			Currency 		= RaceCurrency,
@@ -1870,56 +1947,47 @@ function wowroster:ARCH_frame()
 			Current			= ArtifactCurrent,
 			Artifacts 		= Artifactlist,
 		};
-	
 	end
-
-
-
-
 end
 
-	--[[
-	
-		ok i got mad damn reagents are not working so heres what we are gona do....
-		this will cache everything to your local cach run each time you open to cache
-		new trades...
-	
-	]]--
-	
+--[[
+	ok i got mad damn reagents are not working so heres what we are gona do....
+	this will cache everything to your local cach run each time you open to cache
+	new trades...
+]]--
 function wowroster:ReagentCache()
 
 	if(scan_nextskill>=scan_numtradeskills) then
 		wowroster:FinalizeCacheScan();
 	else
 
-			local skillName, skillType, numAvailable, isExpanded = GetTradeSkillInfo(scan_nextskill);
-			if(skillName~=nil) then
-				if(skillType~="header") then
-					local numReagents = GetTradeSkillNumReagents(scan_nextskill);
-					local skillLink = GetTradeSkillItemLink(scan_nextskill);
-					local numMade = GetTradeSkillNumMade(scan_nextskill);
-					for j=1, numReagents, 1 do
-						local reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo(scan_nextskill, j);
-						local reagentLink = GetTradeSkillReagentItemLink(scan_nextskill,j);
-						scan_reagentcount=scan_reagentcount+1;
-					end
+		local skillName, skillType, numAvailable, isExpanded = GetTradeSkillInfo(scan_nextskill);
+		if(skillName~=nil) then
+			if(skillType~="header") then
+				local numReagents = GetTradeSkillNumReagents(scan_nextskill);
+				local skillLink = GetTradeSkillItemLink(scan_nextskill);
+				local numMade = GetTradeSkillNumMade(scan_nextskill);
+				for j=1, numReagents, 1 do
+					local reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo(scan_nextskill, j);
+					local reagentLink = GetTradeSkillReagentItemLink(scan_nextskill,j);
+					scan_reagentcount=scan_reagentcount+1;
 				end
 			end
+		end
 		scan_nextskill=scan_nextskill+1;
 		wowroster:ReagentCache();
 	end
+
 	return;
 end
 
 function wowroster:BeginCache()
-
-wowroster:Print("Building Cache for "..scan_tradename.." ");
+	wowroster:Print("Building Cache for "..scan_tradename.." ");
 
 	scan_reagentcount=0;
 	scan_nextskill=1;
 	wowroster:ReagentCache();
 	return;
-
 end
 
 function wowroster:FinalizeCacheScan()
@@ -1932,32 +2000,31 @@ end
 
 
 function wowroster:TRADE_SKILL_SHOW()
-
 	if(IsTradeSkillLinked() or IsTradeSkillGuild()) then
 		return nil;
 	end
+
 	local skillLineName,skillLineRank,skillLineMaxRank=GetTradeSkillLine();
 	local numTradeSkills = GetNumTradeSkills();
 	local cnt = 0;
 	scan_tradename = skillLineName;
-	
+
 	if (IsAddOnLoaded("AdvancedTradeSkillWindow") ) then
-		wowroster:Print("ATSW Detected disabeling cache");
+		wowroster:Print("ATSW Detected, disabling cache");
 		scan_cache = false;
 	end
+
 	if (not wowroster.db["Cached"][scan_tradename]) then
 		wowroster.db["Cached"][scan_tradename]=false;
 
 		-- build cache functions
 		scan_numtradeskills = numTradeSkills;
-		
+
 		if (scan_cache) then
 			wowroster:BeginCache();
 		end
 	end
-	
 
-	
 	stat["Professions"][skillLineName] = {};
 	if ( not wowroster.db["Professions"] ) then
 		wowroster.db["Professions"]={};
@@ -1969,90 +2036,87 @@ function wowroster:TRADE_SKILL_SHOW()
 	local skills=wowroster.db["Professions"];
 	stat["Professions"][skillLineName]["ct"] = 0;
 	stat["Professions"][skillLineName]["errors"] = 0;
-	
+
 	if(not skills[skillLineName] ) then
 		skills[skillLineName]={};
 	end
 
 	idxStart = 1;
-	
-		for idx=idxStart,numTradeSkills do
-			skillName,skillType,_,_,serviceType=GetTradeSkillInfo(idx);
-			if( skillName and skillName~="" ) then
-				if( skillType=="header" ) then
-					lastHeaderIdx = idx;
-					skillHeader=skillName;
-					if( not skills[skillLineName][skillHeader] ) then
-						skills[skillLineName][skillHeader]={};
-					end
-					--pdb = skills[skillLineName][skillHeader];
-				elseif( skillHeader ) then
-					cooldown,numMade=nil,nil;
-					numReagents = GetTradeSkillNumReagents(idx);
-					description = GetTradeSkillDescription(idx)
-					reagentlist={};
-					reagentc = 0;
-					local numReagents = GetTradeSkillNumReagents(idx);
-					local skillLink = GetTradeSkillItemLink(idx);
-					local numMade = GetTradeSkillNumMade(idx);
-					for j=1, numReagents, 1 do
-						local reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo(idx, j);
-						local reagentLink = GetTradeSkillReagentItemLink(idx,j);
-						if(reagentName) then
-							
-							itemName, itemLink, itemRarity, itemLevel, _, itemType, itemSubType, _,_, itemTexture,_ = GetItemInfo(reagentName);
-							local ritemColor,_,_,_=wowroster.GetItemInfo(reagentLink);
-							
-							reagentID  = wowroster.GetReagentId( reagentLink );
-							GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')
-							GameTooltip:SetTradeSkillItem(idx,j); --SetTradeSkillItem(idx)
-							tooltip = wowroster.scantooltip2();
-							GameTooltip:Hide()
-							color = wowroster.scanColor(ritemColor);
-							itexture = wowroster.scanIcon(reagentTexture);
-							table.insert(reagentlist,{Name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Color=color,Count=reagentCount,link=reagentLink});
-							reagentc = reagentc+1;
-						end
-					end
-					
-					if (reagentc < numReagents) then
-						--wowroster:Print("".. skillLineName ..":".. skillName .." partical scan. scan agian later");
-						stat["Professions"][skillLineName]["errors"] = stat["Professions"][skillLineName]["errors"]+1;
-					end
 
-					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
-					GameTooltip:SetTradeSkillItem(idx) --SetTradeSkillItem(idx)
-					tooltip1 = wowroster.scantooltip2()
-					GameTooltip:Hide()
-					tooltip = tooltip1 or "";
-					local temColor,_,itemID,itemName=wowroster.GetItemInfo(GetTradeSkillItemLink(idx));
-					local Icon = GetTradeSkillIcon(idx) or "";
-					skills[skillLineName][skillHeader][skillName]={
-						RecipeID  = wowroster.GetRecipeId( GetTradeSkillRecipeLink(idx) ) or "",
-						Difficulty= skillType or "",
-						Color = wowroster.scanColor(temColor) or "",
-						numMade = GetTradeSkillNumMade(idx) or "",
-						itemLink= GetTradeSkillItemLink(idx) or "",
-						Reagentsnum = numReagents or "0",
-						Reagents = reagentlist or "",
-						Icon = wowroster.scanIcon(Icon) or "",
-						desc  = description or "",
-						Tooltip	= tooltip,};
-						
-					cnt = cnt+1;
-
+	for idx=idxStart,numTradeSkills do
+		skillName,skillType,_,_,serviceType=GetTradeSkillInfo(idx);
+		if( skillName and skillName~="" ) then
+			if( skillType=="header" ) then
+				lastHeaderIdx = idx;
+				skillHeader=skillName;
+				if( not skills[skillLineName][skillHeader] ) then
+					skills[skillLineName][skillHeader]={};
 				end
+				--pdb = skills[skillLineName][skillHeader];
+			elseif( skillHeader ) then
+				cooldown,numMade=nil,nil;
+				numReagents = GetTradeSkillNumReagents(idx);
+				description = GetTradeSkillDescription(idx)
+				reagentlist={};
+				reagentc = 0;
+				local numReagents = GetTradeSkillNumReagents(idx);
+				local skillLink = GetTradeSkillItemLink(idx);
+				local numMade = GetTradeSkillNumMade(idx);
+				for j=1, numReagents, 1 do
+					local reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo(idx, j);
+					local reagentLink = GetTradeSkillReagentItemLink(idx,j);
+
+					if(reagentName) then
+						itemName, itemLink, itemRarity, itemLevel, _, itemType, itemSubType, _,_, itemTexture,_ = GetItemInfo(reagentName);
+						local ritemColor,_,_,_=wowroster.GetItemInfo(reagentLink);
+
+						reagentID  = wowroster.GetReagentId( reagentLink );
+						GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')
+						GameTooltip:SetTradeSkillItem(idx,j); --SetTradeSkillItem(idx)
+						tooltip = wowroster.scantooltip2();
+						GameTooltip:Hide()
+						color = wowroster.scanColor(ritemColor);
+						itexture = wowroster.scanIcon(reagentTexture);
+						table.insert(reagentlist,{Name=reagentName,Icon=itexture,Tooltip=tooltip,Item=reagentID,Color=color,Count=reagentCount,link=reagentLink});
+						reagentc = reagentc+1;
+					end
+				end
+
+				if (reagentc < numReagents) then
+					--wowroster:Print("".. skillLineName ..":".. skillName .." partical scan. scan agian later");
+					stat["Professions"][skillLineName]["errors"] = stat["Professions"][skillLineName]["errors"]+1;
+				end
+
+				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
+				GameTooltip:SetTradeSkillItem(idx) --SetTradeSkillItem(idx)
+				tooltip1 = wowroster.scantooltip2()
+				GameTooltip:Hide()
+				tooltip = tooltip1 or "";
+				local temColor,_,itemID,itemName=wowroster.GetItemInfo(GetTradeSkillItemLink(idx));
+				local Icon = GetTradeSkillIcon(idx) or "";
+				skills[skillLineName][skillHeader][skillName]={
+					RecipeID  = wowroster.GetRecipeId( GetTradeSkillRecipeLink(idx) ) or "",
+					Difficulty= skillType or "",
+					Color = wowroster.scanColor(temColor) or "",
+					numMade = GetTradeSkillNumMade(idx) or "",
+					itemLink= GetTradeSkillItemLink(idx) or "",
+					Reagentsnum = numReagents or "0",
+					Reagents = reagentlist or "",
+					Icon = wowroster.scanIcon(Icon) or "",
+					desc  = description or "",
+					Tooltip	= tooltip,
+				};
+				cnt = cnt+1;
 			end
-		end	
-		stat["Professions"][skillLineName]["ct"] = cnt;
-		--wowroster.db = skills				
+		end
+	end
+	stat["Professions"][skillLineName]["ct"] = cnt;
+	--wowroster.db = skills
 end
 
-
-
 wowroster.scantooltip2 = function()
-local ttName = "GameTooltip";
-local isHTML = true
+	local ttName = "GameTooltip";
+	local isHTML = true
 
 	if(GameTooltip and GameTooltip:NumLines() > 0) then
 		local idx,ttFontStr,tmpbuff,ttText=nil,nil,nil,{};
@@ -2077,29 +2141,34 @@ local isHTML = true
 			if(tmpbuff) then table.insert(ttText,tmpbuff); end
 		end
 		GameTooltip:ClearLines();
-		if(isHTML) then return table.concat(ttText,"<br>");
-		else return ttText; end
+		if(isHTML) then
+			return table.concat(ttText,"<br>");
+		else
+			return ttText;
+		end
 	end
 	return "";
 end
+
 wowroster.GetReagentId = function(itemStr)
 	if(itemStr) then 
 		local _,_,itemid,_,_,_,_,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
-			if( itemid ~= 0) then
+		if( itemid ~= 0) then
 			--wowroster:Print("has gem "..gid1.." "..gid2.." "..gid3.."");
-				return itemid;
-			else
-				return nil;
-			end
+			return itemid;
+		else
+			return nil;
 		end
-		return nil;
-	end	
+	end
+	return nil;
+end
 
 wowroster.GetRecipeId = function(recipeStr)
 	local id;
 	if(recipeStr) then _,_,id = string.find(recipeStr, "|Henchant:(%d+)|h"); end
 	return tonumber(id);
 end
+
 wowroster.GetItemID = function(itemStr)
 	local id,rid;
 	if(itemStr) then _,_,id,rid=string.find(itemStr,"|Hitem:(%d+):[-%d]+:[-%d]+:[-%d]+:[-%d]+:[-%d]+:([-%d]+):[-%d]+:[%d]+|h"); end
@@ -2131,7 +2200,6 @@ function wowroster:GetInventory()
 	wowroster.db["timestamp"]["Inventory"]=time();
 end
 
-
 function wowroster:GetBank()
 	if(not wowrpref["scan"]["bank"]) then
 		wowroster.db["Bank"]=nil;
@@ -2139,9 +2207,11 @@ function wowroster:GetBank()
 	elseif(not wowroster.db["Bank"]) then
 		wowroster.db["Bank"]={};
 	end
+
 	local structBank=wowroster.db["Bank"];
 	local containers={};
 	table.insert(containers,BANK_CONTAINER);
+
 	for bagid=1,NUM_BANKBAGSLOTS do
 		table.insert(containers,bagid+NUM_BAG_SLOTS);
 	end
@@ -2157,18 +2227,19 @@ end
 
 function wowroster:ScanContainer(invgrp,bagidx,bagid)
 	local itemColor,itemID,itemName,itemIcon,itemLink;
-	
+
 	local function numNil(num)
 		if(wowrpref["fixquantity"] and num and num<=1) then return nil
 		else return num
 		end
 	end
-	
+
 	if(bagid==0) then
 		itemName=GetBagName(bagid);
 		itemIcon="Button-Backpack-Up";
 		if(not wowroster.prefs["fixicon"]) then
-			itemIcon="Interface\\Buttons\\"..itemIcon; end
+			itemIcon="Interface\\Buttons\\"..itemIcon;
+		end
 		GameTooltip:SetText(""..itemName.."",_,_,_,_);
 		GameTooltip:AddLine(format(CONTAINER_SLOTS,wowroster.GetContainerNumSlots(bagid),BAGSLOT));
 	elseif(bagid==BANK_CONTAINER) then
@@ -2177,7 +2248,8 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 		itemName = KEYRING;
 		itemIcon="UI-Button-KeyRing";
 		if(not wowroster.prefs["fixicon"]) then
-			itemIcon="Interface\\Buttons\\"..itemIcon; end
+			itemIcon="Interface\\Buttons\\"..itemIcon;
+		end
 		GameTooltip:SetText(itemName);
 		tooltip = wowroster.scantooltip2()
 		GameTooltip:Hide()
@@ -2189,15 +2261,15 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 		GameTooltip:SetInventoryItem("player",invID)
 		tooltip = wowroster.scantooltip2()
 		GameTooltip:Hide()
-
 	end
-	
+
 	local bagSlot = GetContainerNumSlots(bagid)
 	local bagInv = 0;
 	if(bagSlot==nil or bagSlot==0) then
 		wowroster.state[invgrp][bagidx]=nil
 		return nil;
 	end
+
 	local container={
 		Name	= itemName,
 		Color	= wowroster.scanColor(itemColor),
@@ -2206,33 +2278,33 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 		Icon	= wowroster.scanIcon(itemIcon),
 		Tooltip	= tooltip,
 		Contents= {}
-		};
+	};
+
 	for slot=1,bagSlot do
 		local itemLink=GetContainerItemLink(bagid,slot);
 		if(itemLink) then
 			local itemIcon,itemCount,_,_=GetContainerItemInfo(bagid,slot);
-
 			container["Contents"][slot]=wowroster:ScanItemInfo(itemLink,itemIcon,itemCount,slot,bagid);
 			bagInv=bagInv+1;
 		end
 	end
+
 	stat["Bag"][bagid]=true;
 	stat[invgrp][bagidx]={slot=bagSlot,inv=bagInv};
 	return container
 end
 
-
 --[ScanTooltipOO]
 wowroster.ScanTooltipOO = function(self)
-
-		local tooltipname=wowroster.tooltip:GetName();
+	local tooltipname=wowroster.tooltip:GetName();
 
 	if( not wowroster.tooltip:IsOwned(UIParent) ) then
-		--wowroster:PrintDebug("tooltip fix owner");
+		--wowroster:PrintDebug("Tooltip fix owner");
 		wowroster.tooltip:SetOwner(UIParent,"ANCHOR_NONE");
 	end
 	return wowroster.ScanTooltip(tooltipname,wowroster.tooltip,true)
 end
+
 --[ScanTooltip] ttName,ttFrame,isHTML
 wowroster.ScanTooltip = function(ttName,ttFrame,isHTML)
 	if(ttFrame and ttFrame:NumLines()~=0) then
@@ -2264,11 +2336,12 @@ wowroster.ScanTooltip = function(ttName,ttFrame,isHTML)
 	return nil
 end
 
-
 function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 	local function numNil(num)
-		if(wowrpref["fixquantity"] and num and num<=1) then return nil
-		else return num
+		if(wowrpref["fixquantity"] and num and num<=1) then
+			return nil
+		else
+			return num
 		end
 	end
 	if(itemstr) then
@@ -2276,28 +2349,29 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		if(not itemName or not itemColor) then
 			itemName,itemColor=wowroster.GetItemInfoTT(self.tooltip);
 		end
-			if(bagid=="player") then
-				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
-				GameTooltip:SetInventoryItem("player",slot);
-				tooltip = wowroster.scantooltip2();
-				wowroster.tooltip:Hide();
-				link = GetInventoryItemLink("player",slot);
-			elseif(bagid==BANK_CONTAINER) then
-				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
-				GameTooltip:SetInventoryItem("player",BankButtonIDToInvSlotID(slot));--SetBagItem(bagid,slot);
-				tooltip = wowroster.scantooltip2();
-				GameTooltip:Hide();
-			elseif(bagid==KEYRING_CONTAINER) then
-				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
-				GameTooltip:SetInventoryItem("player",KeyRingButtonIDToInvSlotID(slot));
-				tooltip = wowroster.scantooltip2();
-				GameTooltip:Hide();
-			else
-				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
-				GameTooltip:SetBagItem(bagid,slot);
-				tooltip = wowroster.scantooltip2();
-				GameTooltip:Hide();
-			end
+
+		if(bagid=="player") then
+			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
+			GameTooltip:SetInventoryItem("player",slot);
+			tooltip = wowroster.scantooltip2();
+			wowroster.tooltip:Hide();
+			link = GetInventoryItemLink("player",slot);
+		elseif(bagid==BANK_CONTAINER) then
+			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
+			GameTooltip:SetInventoryItem("player",BankButtonIDToInvSlotID(slot));--SetBagItem(bagid,slot);
+			tooltip = wowroster.scantooltip2();
+			GameTooltip:Hide();
+		elseif(bagid==KEYRING_CONTAINER) then
+			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
+			GameTooltip:SetInventoryItem("player",KeyRingButtonIDToInvSlotID(slot));
+			tooltip = wowroster.scantooltip2();
+			GameTooltip:Hide();
+		else
+			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
+			GameTooltip:SetBagItem(bagid,slot);
+			tooltip = wowroster.scantooltip2();
+			GameTooltip:Hide();
+		end
 
 		local itemBlock={
 			Name	= itemName,
@@ -2312,78 +2386,77 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 			SubType	= itemSubType,
 			iLevel	= itemLevel,
 			reqLevel= itemReqLevel,
-			};
-		
+		};
+
 		if( wowroster.ItemHasGem(itemID) ) then
-			
-				local gem1, gem2, gem3 = GetInventoryItemGems(slot);
-				local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemID,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
-				itemBlock["Gem"] = {};
+			local gem1, gem2, gem3 = GetInventoryItemGems(slot);
+			local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemID,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
+			itemBlock["Gem"] = {};
 
-				if (gid1 ~= '0') then
-					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem1);
-					
-					if (itemLink)then
-					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
-					GameTooltip:SetHyperlink(itemLink);
-					tooltip = wowroster.scantooltip2();
-					GameTooltip:Hide();
-					else
-						tooltip = nil;
-					end				
-					itemBlock["Gem"][1]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
-						Name = itemName,
-						Item = gem1,
-						gemID = gid1,
-						Color	= wowroster.scanColor(itemColor),
-						Link = itemLink,
-						Tooltip = tooltip,
-						Icon = wowroster.scanIcon(itemTexture),
-					};
-				end
-				
-				if (gid2 ~= '0') then
-					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem2);
-					if (itemLink)then
-					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
-					GameTooltip:SetHyperlink(itemLink);
-					tooltip = wowroster.scantooltip2();
-					GameTooltip:Hide();
-					else
-						tooltip = nil;
-					end				
-					itemBlock["Gem"][2]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
-						Name = itemName,
-						Item = gem2,
-						gemID = gid2,
-						Color	= wowroster.scanColor(itemColor),
-						Link = itemLink,
-						Tooltip = tooltip,
-						Icon = wowroster.scanIcon(itemTexture),
-					};
-				end
-				
-				if (gid3 ~= '0') then
+			if (gid1 ~= '0') then
+				local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem1);
 
-					local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem3);					
-					if (itemLink)then
+				if (itemLink)then
 					GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
 					GameTooltip:SetHyperlink(itemLink);
 					tooltip = wowroster.scantooltip2();
 					GameTooltip:Hide();
-					else
-						tooltip = nil;
-					end
-					itemBlock["Gem"][3]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
-						Name = itemName,
-						Item = gem3,
-						gemID = gid3,
-						Color	= wowroster.scanColor(itemColor),
-						Link = itemLink,
-						Tooltip = tooltip,
-						Icon = wowroster.scanIcon(itemTexture),
-					};
+				else
+					tooltip = nil;
 				end
+				itemBlock["Gem"][1]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
+					Name = itemName,
+					Item = gem1,
+					gemID = gid1,
+					Color = wowroster.scanColor(itemColor),
+					Link = itemLink,
+					Tooltip = tooltip,
+					Icon = wowroster.scanIcon(itemTexture),
+				};
+			end
+
+			if (gid2 ~= '0') then
+				local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem2);
+				if (itemLink)then
+				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
+				GameTooltip:SetHyperlink(itemLink);
+				tooltip = wowroster.scantooltip2();
+				GameTooltip:Hide();
+				else
+					tooltip = nil;
+				end
+				itemBlock["Gem"][2]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
+					Name = itemName,
+					Item = gem2,
+					gemID = gid2,
+					Color = wowroster.scanColor(itemColor),
+					Link = itemLink,
+					Tooltip = tooltip,
+					Icon = wowroster.scanIcon(itemTexture),
+				};
+			end
+
+			if (gid3 ~= '0') then
+
+				local itemColor,itemLink,itemID,itemName,itemTexture,itemType,itemSubType,itemLevel,itemReqLevel,itemRarity=wowroster.GetItemInfo(gem3);					
+				if (itemLink)then
+				GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');
+				GameTooltip:SetHyperlink(itemLink);
+				tooltip = wowroster.scantooltip2();
+				GameTooltip:Hide();
+				else
+					tooltip = nil;
+				end
+				itemBlock["Gem"][3]={ --wowroster:ScanItemInfo(gemItemLink,nil,1,nil,nil);
+					Name = itemName,
+					Item = gem3,
+					gemID = gid3,
+					Color = wowroster.scanColor(itemColor),
+					Link = itemLink,
+					Tooltip = tooltip,
+					Icon = wowroster.scanIcon(itemTexture),
+				};
+			end
 		end
 		return itemBlock;
 	end
@@ -2392,11 +2465,11 @@ end
 
 --[ItemHasGem] itemStr
 wowroster.ItemHasGem = function(itemStr)
-
 	local gem1name, gem1Link = GetItemGem(itemStr, 1)
 
 	if(itemStr) then 
-	local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
+		local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
+
 		if( gid1 and gid2 and gid3 and gid1+gid2+gid3 ~= 0) then
 			return true;
 		else
@@ -2407,9 +2480,8 @@ wowroster.ItemHasGem = function(itemStr)
 end
 
 --[[
-begin spellbook functions
+	begin spellbook functions
 ]]--
-
 function wowroster:GetSpellBook()
 	if(not wowrpref["scan"]["spells"]) then
 		self.db["SpellBook"]=nil;
@@ -2421,7 +2493,7 @@ function wowroster:GetSpellBook()
 	if ( not wowroster.db["timestamp"]["SpellBook"] ) then
 		wowroster.db["timestamp"]["SpellBook"] = {};
 	end
-	
+
 	local Spelltotal = 0
 	local structSpell=wowroster.db["SpellBook"];
 	for spellTab=1,GetNumSpellTabs() do
@@ -2430,9 +2502,9 @@ function wowroster:GetSpellBook()
 		if(not self.state["SpellBook"][spellTabname] or self.state["SpellBook"][spellTabname]~=numSpells) then
 			if (not spellTabtexture) then spellTabtexture = "achievement_guildperk_fasttrack_rank2"; end
 			structSpell[spellTabname]={
-					Icon	= wowroster.scanIcon(spellTabtexture),
-					Spells	= {},
-					};
+				Icon	= wowroster.scanIcon(spellTabtexture),
+				Spells	= {},
+			};
 			stat["SpellBook"][spellTabname]=0;
 			cnt=0;
 			for spellId=1+offset,numSpells+offset do
@@ -2449,17 +2521,17 @@ function wowroster:GetSpellBook()
 		wowroster.db["timestamp"]["SpellBook"]=time();
 	end
 end
+
 function wowroster:ScanSpellInfo(idx,bookType)
 	if(not idx or not bookType ) then return end
-	
+
 	local spellName, spellRank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = GetSpellInfo(idx,bookType);
-	
+
 	GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')  
 	GameTooltip:SetSpellBookItem(idx,bookType);
 	tooltip = wowroster.scantooltip2()
 	GameTooltip:Hide()
-			
-			
+
 	if( spellRank and spellRank == "" ) then
 		spellRank = nil;
 	end
@@ -2479,9 +2551,8 @@ wowroster.GetSpellID = function(spellStr)
 end
 
 --[[
-begin talent data 
+	begin talent data 
 ]]--
-
 function wowroster:GetTalents(unit)
 	if(not wowrpref["scan"]["talents"] or UnitLevel("player") < 10 ) then
 		wowroster.db["Talents"]=nil; return;
@@ -2489,7 +2560,7 @@ function wowroster:GetTalents(unit)
 	unit = unit or "player";
 
 	local numTabs,numPts,state,petName;
-	
+
 	local structTalent={};
 	local structTalents={};
 	atg = GetActiveTalentGroup(false, "player");
@@ -2498,6 +2569,7 @@ function wowroster:GetTalents(unit)
 	else
 		TalentGroup = 2;
 	end
+
 	stat["Talents"] = {};
 	if ( unit == "pet" ) then
 		petName = UnitName("pet");
@@ -2512,42 +2584,45 @@ function wowroster:GetTalents(unit)
 		numTabs=GetNumTalentTabs();
 		wowroster.db["TalentPoints"]=numPts;
 		state = "Talents";
-		
 	end
-		local tabName,iconTexture,pointsSpent,background;
-		
-		local cnt=0;
-		local nameTalent,iconTexture,tier,column,currentRank,maxRank,isExceptional,meetsPrereq;
-		for tabIndex=1,numTabs do
-			Tabid, tabName, desc, iconTexture, pointsSpent, background, previewPoints, isUnlocked = GetTalentTabInfo(tabIndex,nil,unit=="pet",nil);
-			stat["Talents"][tabName] = 0;
-			if(not wowrpref["fixicon"]) then
-				background="Interface\\TalentFrame\\"..background; end
-				structTalent[tabName]={
-					Background=wowroster.scanIcon(background),
-					PointsSpent=pointsSpent,
-					Desc = desc,
-					Unlocked=isUnlocked,
-					Order=tabIndex
-				};
-			for talentIndex=1,GetNumTalents(tabIndex,nil,unit=="pet") do
-			name,iconTexture,tier,column,rank,maxRank,isExceptional,meetsPrereq,previewRank,meetsPreviewPrereq=GetTalentInfo(tabIndex,talentIndex,nil,unit=="pet",nil);
-				if( name ) then
-					structTalent[tabName][name]={
-						Rank	= strjoin(":", rank,maxRank),
-						Location= strjoin(":", tier,column),
-					};
-				end
-			end
-			stat["Talents"][tabName] = pointsSpent;
-		end
-		if ( unit == "pet" ) then
-			wowroster.db["Pets"][petName]["Talents"]=structTalent;
-		else
-			wowroster.db["Talents"]=structTalent;
+
+	local tabName,iconTexture,pointsSpent,background;
+
+	local cnt=0;
+	local nameTalent,iconTexture,tier,column,currentRank,maxRank,isExceptional,meetsPrereq;
+	for tabIndex=1,numTabs do
+		Tabid, tabName, desc, iconTexture, pointsSpent, background, previewPoints, isUnlocked = GetTalentTabInfo(tabIndex,nil,unit=="pet",nil);
+		stat["Talents"][tabName] = 0;
+		if(not wowrpref["fixicon"]) then
+			background="Interface\\TalentFrame\\"..background;
 		end
 
-	
+		structTalent[tabName]={
+			Background=wowroster.scanIcon(background),
+			PointsSpent=pointsSpent,
+			Desc = desc,
+			Unlocked=isUnlocked,
+			Order=tabIndex
+		};
+
+		for talentIndex=1,GetNumTalents(tabIndex,nil,unit=="pet") do
+			name,iconTexture,tier,column,rank,maxRank,isExceptional,meetsPrereq,previewRank,meetsPreviewPrereq=GetTalentInfo(tabIndex,talentIndex,nil,unit=="pet",nil);
+			if( name ) then
+				structTalent[tabName][name]={
+					Rank	= strjoin(":", rank,maxRank),
+					Location= strjoin(":", tier,column),
+				};
+			end
+		end
+		stat["Talents"][tabName] = pointsSpent;
+	end
+
+	if ( unit == "pet" ) then
+		wowroster.db["Pets"][petName]["Talents"]=structTalent;
+	else
+		wowroster.db["Talents"]=structTalent;
+	end
+
 	if (numTalentGroups==2) then
 		wowroster.db["DualSpec"]={}
 		if(not wowrpref["scan"]["dstalents"] or UnitLevel("player") < 10 ) then
@@ -2556,7 +2631,7 @@ function wowroster:GetTalents(unit)
 		stat["DSTalents"] = {};
 		wowroster.db["DualSpec"] = {};
 		local tabName,iconTexture,pointsSpent,background;
-		
+
 		local nameTalent, iconTexture, tier, column, currentRank, maxRank, isExceptional, meetsPrereq, previewRank, meetsPreviewPrereq;
 		for tabIndex=1,numTabs do
 			Tabid, tabName, desc, iconTexture, pointsSpent, background, previewPoints, isUnlocked = GetTalentTabInfo(tabIndex,nil,unit=="pet", TalentGroup);
@@ -2597,6 +2672,7 @@ wowroster.GetItemInfo = function(itemStr)
 	end
 	return nil;
 end
+
 --[GetItemInfoTT] tooltip
 wowroster.GetItemInfoTT = function(tooltip)
 	local ttName,ttFrame
@@ -2611,11 +2687,16 @@ wowroster.GetItemInfoTT = function(tooltip)
 	end
 	local nTT,cTT,r,g,b;
 	if(ttName==nil) then return end
+
 	ttText=getglobal(ttName.."TextLeft1");
+
 	if(ttText) then
 		nTT=ttText:GetText();
 	end
-	if(nTT) then r,g,b=ttText:GetTextColor(); cTT=string.format("ff%02x%02x%02x",r*256,g*256,b*256); end
+	if(nTT) then
+		r,g,b=ttText:GetTextColor();
+		cTT=string.format("ff%02x%02x%02x",r*256,g*256,b*256);
+	end
 	return nTT,cTT;
 end
 
@@ -2635,15 +2716,16 @@ end
 wowroster.GetItemId = function(itemStr)
 	if(itemStr) then 
 		local _,_,itemid,_,gid1,gid2,gid3,_,_,_=string.find(itemStr,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
-			if( itemid ~= 0) then
-			--wowroster:Print("has gem "..gid1.." "..gid2.." "..gid3.."");
-				return itemid;
-			else
-				return nil;
-			end
+		if( itemid ~= 0) then
+		--wowroster:Print("has gem "..gid1.." "..gid2.." "..gid3.."");
+			return itemid;
+		else
+			return nil;
 		end
-		return nil;
-	end	
+	end
+	return nil;
+end
+
 wowroster.scanColor = function(str)
 	if(not str) then return nil; end
 	local _,_,c = string.find(str,"%x%x(%x%x%x%x%x%x)");
@@ -2693,6 +2775,7 @@ wowroster.parseMoney = function(money)
 		copper=mod(money,COPPER_PER_SILVER);
 	return gold,silver,copper;
 end
+
 --[wowroster.round](num,[digit])
 wowroster.round = function(num,digit)
 	if(not tonumber(num)) then return nil; end
@@ -2705,6 +2788,7 @@ wowroster.round = function(num,digit)
 	else fmt="%."..digit.."f"; end
 	return format(fmt,num);
 end
+
 --[Str2Ary] str
 wowroster.Str2Ary = function(str)
 	local tab={};
@@ -2728,34 +2812,42 @@ wowroster.Str2Ary = function(str)
 	end
 	return tab;
 end
+
 --[Str2Abbr] str
 wowroster.Str2Abbr = function(str)
 	local abbr='';
 	local function S2Ahelper(word) abbr=abbr..string.sub(word,1,1) end
-	if not string.find(string.gsub(str,"%w+",S2Ahelper),"%S") then return abbr end end
+	if not string.find(string.gsub(str,"%w+",S2Ahelper),"%S") then return abbr end
+end
+
 --[Arg2Tab] arg:key.1,key.n,val.1,val.n
 wowroster.Arg2Tab = function(...)
 	local tab={};
 	local split=floor( select("#",...) /2);
 	for i=1,split do tab[select(i,...)]=select(i+split,...); end
-	return tab; end
+	return tab;
+end
+
 --[Arg2Ary] arg:arg.1,arg.n
 wowroster.Arg2Ary = function(...)
 	local tab={};
 	for i=1,select("#",...) do tab[i]=select(i,...); end
 	return tab; 
 end
+
 wowroster.StringColorize = function(color,msg)
 	if(color and msg) then
 		return "|cff"..color..msg.."|r";
 	end
 end
+
 --[function] str
 wowroster.version = function()
 	local version,_,_ = GetBuildInfo();
 	local _,_,version,major,minor=string.find(version,"(%d+).(%d+).(%d+)");
 	return tonumber(version),tonumber(major),tonumber(minor);
 end
+
 --[GetQuestID] questStr
 wowroster.GetQuestID = function(questStr)
 	local id,lvl;
@@ -2767,13 +2859,13 @@ wowroster.versionkey = function()
 	local version,buildnum,_ = GetBuildInfo();
 	return strjoin(":", wowroster.GetSystem(),version,buildnum);
 end
+
 --[function] str
 wowroster.GetSystem = function()
 	local _,_,sys=string.find(GetCVar("realmList"),"^[%a.]-(%a+).%a+.%a+.%a+$");
 	if(not sys) then sys="" end return sys;
 end
+
 function wowroster:Print(...)
 	print("|cff33ff99WoWR-P|r:", ...)
 end
-
-
