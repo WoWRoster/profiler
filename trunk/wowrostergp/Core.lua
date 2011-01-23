@@ -1,3 +1,4 @@
+
 --wowrostergp = LibStub("AceAddon-3.0"):NewAddon("wowrostergp", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 wowrostergp = LibStub("AceAddon-3.0"):NewAddon("wowrostergp", "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 local acr = LibStub("AceConfigRegistry-3.0")
@@ -12,33 +13,34 @@ local LDBIcon = LibStub("LibDBIcon-1.0", true)
 local L_BT_LEFT = "|cffffff00Click|r to save character";
 local L_BT_RIGHT = "|cffffff00Right-click|r to save guild";
 
-	
 local wowrgpLDB = LibStub("LibDataBroker-1.1"):NewDataObject("wowrostermm", {
-		type = "launcher",
-		label = "WoW Roster Profiler",
-		OnClick = function(_, msg)
-			if msg == "LeftButton" then
-				wowroster:export();
-			elseif msg == "RightButton" then
-				wowrostergp:gpexport();
-			end
-		end,
-		icon = "Interface\\Icons\\ACHIEVEMENT_GUILDPERK_EVERYONES A HERO_RANK2",
-		OnTooltipShow = function(tooltip)
-			if not tooltip or not tooltip.AddLine then return end
-			tooltip:AddLine("WoWRoster Profiler")
-			tooltip:AddLine(L_BT_LEFT)
-			tooltip:AddLine(L_BT_RIGHT)
-		end,
-	})
+	type = "launcher",
+	label = "WoWRoster Profiler",
+	OnClick = function(_, msg)
+		if msg == "LeftButton" then
+			wowroster:export();
+		elseif msg == "RightButton" then
+			wowrostergp:gpexport();
+		end
+	end,
+	icon = "Interface\\Icons\\ACHIEVEMENT_GUILDPERK_EVERYONES A HERO_RANK2",
+	OnTooltipShow = function(tooltip)
+		if not tooltip or not tooltip.AddLine then return end
+		tooltip:AddLine("WoWRoster Profiler")
+		tooltip:AddLine(L_BT_LEFT)
+		tooltip:AddLine(L_BT_RIGHT)
+	end,
+})
 
 local icon = LibStub("LibDBIcon-1.0")
 
 local gnews = {"Player Achievements","Instances","Item Loots","Items Crafted","Items Purchesed","Guild Level","Player Level","opps1","opps2"};gnews[0]="Guild Achievements";gnews["-1"]="Guild Achievements";
+
 if(not wowroster) then wowroster={}; end
 if(not wowroster.colorTitle) then wowroster.colorTitle="909090"; end
 if(not wowroster.colorGreen) then wowroster.colorGreen="00cc00"; end
 if(not wowroster.colorRed)   then wowroster.colorRed  ="ff0000"; end
+
 --wowrostergp.sv = {};
 local Guild_name = nil;
 local Server = nil;
@@ -55,6 +57,7 @@ local stat = {
 	Vault={},
 	Vaultavl=true,
 };
+
 local defaults = {
 	profile = {
 		tooltip = "enabled",
@@ -69,6 +72,7 @@ local defaults = {
 		minimapIcon = {},
 	}
 }
+
 local function findPanel(name, parent)
 	for i, button in next, InterfaceOptionsFrameAddOns.buttons do
 		if button.element then
@@ -82,11 +86,10 @@ end
 function wowrostergp:OnEnable()
 	self:RegisterEvent("GUILDBANKFRAME_OPENED");
 	self:RegisterEvent("ADDON_LOADED");
-	wowrostergp:Print("WoWR-GP Enabled! 1.0.r62");
+	wowrostergp:Print("Hello, WoWRoster Guild Profiler Enabled and Loaded! |cffff3399[1.0 r73]|r");
+	wowrostergp:Print("Open the menu, click Interface, then go to the Addons tab to configure");
 	wowrostergp:InitState();
-
 end
-
 
 function wowrostergp:ADDON_LOADED(arg1,arg2)
 	--wowrostergp:Print(" --: "..arg1.." - "..arg2.."");
@@ -98,7 +101,7 @@ end
 function wowrostergp:ButtonHandler()
 	self.buttons = {}
 	local button = CreateFrame("Button", "GuildProfilerbtm", GuildFrame, "UIPanelButtonTemplate");
-	button.tooltip = "export guild data"--L["Click to export your Guild Profile!"]
+	button.tooltip = "Save guild data"--L["Click to export your Guild Profile!"]
 	button.startTooltip = button.tooltip
 	button:SetPoint("TOPRIGHT", GuildFrame, "TOPRIGHT", -25, 0)
 	button:SetWidth(50)
@@ -111,10 +114,8 @@ function wowrostergp:ButtonHandler()
 end
 
 function wowrostergp:OnDisable()
-
 	LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
 	LibStub("AceDB-3.0"):New("cpminimap",self.mm)
-
 end
 
 function wowrostergp:OnInitialize()
@@ -124,7 +125,7 @@ function wowrostergp:OnInitialize()
 		addon:SendMessage("scan updated");
 	end
 	wowrostergp:InitProfile();
-	
+
 	self.mm = LibStub("AceDB-3.0"):New("cpminimap", {
 		profile = {
 			minimap = {
@@ -133,11 +134,9 @@ function wowrostergp:OnInitialize()
 		},
 	})
 	icon:Register("WoWRoster Profiler", wowrgpLDB, self.mm.profile.minimap)
-
 end
 
 function wowrostergp:InitState()
-
 	Guild_name = GetGuildInfo("player");
 	Server = GetRealmName();
 
@@ -165,7 +164,7 @@ function wowrostergp:gpexport()
 	if(wowrpref["guild"]["trades"]) then
 		wowrostergp:ScanProfessions();
 	end
-	
+
 	msg = stat["_guild"];
 	wowrostergp:Print(msg);
 	msg = "Vault:";
@@ -173,7 +172,7 @@ function wowrostergp:gpexport()
 	table.foreach(stat["Vault"], function(k,v) table.insert(tsort,k) end );
 		table.sort(tsort);
 		if(table.getn(tsort)==0) then
-			msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your Guild Vault to scan";
+			msg=msg..wowroster.StringColorize(wowroster.colorRed," not scanned")..".  - open your guild vault to scan";
 		else
 		for _,item in pairs(tsort) do
 			msg=msg .. " " .. item.."-"..stat["Vault"][item]["inv"].."/"..stat["Vault"][item]["slot"];
@@ -186,14 +185,13 @@ function wowrostergp:gpexport()
 end
 
 function wowrostergp:InitProfile()
-
 	if ( not(Guild_name) ) then
 		Guild_name = GetGuildInfo("player");
 	end
 	if ( not(Guild_name) ) then
 		return stat["_loaded"];
 	end
-	
+
 	if( not cpProfile ) then
 		cpProfile={}; 
 	end
@@ -211,9 +209,8 @@ function wowrostergp:InitProfile()
 	local currentXP, nextLevelXP, dailyXP, maxDailyXP = UnitGetGuildXP("player");
 	local nextxp = nextLevelXP + currentXP;
 	if( self.sv ) then
-	
-		wowrostergp:Print("gp profile started");
-		
+		wowrostergp:Print("Guild profile started");
+
 		self.sv["GPversion"]	= "1.0.0";
 		self.sv["CPprovider"]	= "wowr";
 		self.sv["DBversion"]	= "3.1";
@@ -221,7 +218,7 @@ function wowrostergp:InitProfile()
 		self.sv["Server"]		= Server;
 		self.sv["Locale"]		= GetLocale();
 		self.sv["GuildXP"]		= currentXP..":"..nextxp;
-		self.sv["GuildXPCap"]		= dailyXP..":"..maxDailyXP;
+		self.sv["GuildXPCap"]	= dailyXP..":"..maxDailyXP;
 		self.sv["GuildLevel"]	= GetGuildLevel();
 		self.sv["FactionEn"],self.sv["Faction"]=UnitFactionGroup("player");
 		self.sv["timestamp"] = {};
@@ -259,7 +256,6 @@ end
 
 function wowrostergp:GUILDBANKFRAME_OPENED()
 	if(wowrpref["guild"]["vault"]) then
-	
 		numTabs = GetNumGuildBankTabs();
 		for tab=1, numTabs do
 			QueryGuildBankTab(tab);
@@ -273,6 +269,7 @@ function wowrostergp:GetGuildInfo()
 		stat["_guilded"]=false;
 		return;
 	end
+
 	stat["_guild"] = GetGuildInfo("player");
 	local numGuildMembers, onlineMembers = GetNumGuildMembers();
 
@@ -302,86 +299,87 @@ function wowrostergp:ScanGuildMembers(numMembers)
 	stat["_officer"] = CanViewOfficerNote();
 	--if(numMembers > 0 and (stat["_guildNum"]~=numMembers)) then
 	local numMembers, onlineMembers = GetNumGuildMembers();
-		local showOfflineTemp=GetGuildRosterShowOffline();
-		SetGuildRosterShowOffline(true);
-		local cnt = 0;
-		local guildMemberTemp={};
-		for idx=1,numMembers do
-			local name,rank,rankIndex,level,class,zone,note,officernote,online,status,classEn,achievementPoints,achievementRank,isMobile=GetGuildRosterInfo(idx);
-			local lastonline;
-			if(name~=nil)then
-				if(stat["_officer"]) then
-				elseif((guildMemberTemp) and guildMemberTemp[name]) then
-					officernote = guildMemberTemp[name]["OfficerNote"];
-				end
+	local showOfflineTemp=GetGuildRosterShowOffline();
+	SetGuildRosterShowOffline(true);
+	local cnt = 0;
+	local guildMemberTemp={};
+	for idx=1,numMembers do
+		local name,rank,rankIndex,level,class,zone,note,officernote,online,status,classEn,achievementPoints,achievementRank,isMobile=GetGuildRosterInfo(idx);
+		local lastonline;
+		if(name~=nil)then
+			if(stat["_officer"]) then
+			elseif((guildMemberTemp) and guildMemberTemp[name]) then
+				officernote = guildMemberTemp[name]["OfficerNote"];
+			end
 
-				-- ################### now hardcode but can be used rankindex and setup in options!
-				if (rank=="Alter" or rank=="Alter de Ofi") then
-					local correct = string.find(note,"ALT-");
-					local main = string.sub(note, 5);
-					if (correct == nil) then
-						addon:Print(string.format(L["Revise public note for %s (%s) = '%s' need start with 'ALT-'."],name,rank,note));
-					elseif ( not UnitIsInMyGuild(main)) then
-						addon:Print(string.format(L["Revise public note for %s (%s) = '%s' because %s its not in the guild."],name,rank,note,main));
-					end
+			-- ################### now hardcode but can be used rankindex and setup in options!
+			if (rank=="Alter" or rank=="Alter de Ofi") then
+				local correct = string.find(note,"ALT-");
+				local main = string.sub(note, 5);
+				if (correct == nil) then
+					wowrostergp:Print(string.format(L["Note: Revise public note for %s (%s) = '%s' should start with 'ALT-'."],name,rank,note));
+				elseif ( not UnitIsInMyGuild(main)) then
+					wowrostergp:Print(string.format(L["Note: Revise public note for %s (%s) = '%s' because %s is not in the guild."],name,rank,note,main));
 				end
-				-- ##################
+			end
+			-- ##################
 
-				if(not wowrpref["guild"]["title"]) then rank = nil; end
+			if(not wowrpref["guild"]["title"]) then rank = nil; end
 
-				if(wowrpref["guild"]["compact"]) then
-					if(status=="") then status = nil; end
-					if(note=="") then note = nil; end
-					if(officernote=="") then officernote = nil; end
-				end
-				if(not online) then
-					lastonline = strjoin(":",GetGuildRosterLastOnline(idx));
-				end
-				
-				guildMemberTemp[name] = {
-					Name	= name,
-					Rank	= rankIndex,
-					RankEn	= rank,
-					Title	= rank,
-					Level	= level,
-					Class	= class,
-					ClassId	= wowroster.UnitClassID(classEn),
-					Zone	  = zone,
-					Status	= status,
-					Note	  = note,
-					OfficerNote= officernote,
-					Online	   = online,
-					LastOnline = lastonline,
-					AchPoints = achievementPoints,
-					AchRank = achievementRank,
-					Mobile = isMobile,
+			if(wowrpref["guild"]["compact"]) then
+				if(status=="") then status = nil; end
+				if(note=="") then note = nil; end
+				if(officernote=="") then officernote = nil; end
+			end
+			if(not online) then
+				lastonline = strjoin(":",GetGuildRosterLastOnline(idx));
+			end
+			
+			guildMemberTemp[name] = {
+				Name	= name,
+				Rank	= rankIndex,
+				RankEn	= rank,
+				Title	= rank,
+				Level	= level,
+				Class	= class,
+				ClassId	= wowroster.UnitClassID(classEn),
+				Zone	  = zone,
+				Status	= status,
+				Note	  = note,
+				OfficerNote= officernote,
+				Online	   = online,
+				LastOnline = lastonline,
+				AchPoints = achievementPoints,
+				AchRank = achievementRank,
+				Mobile = isMobile,
+			};
+
+			local weeklyXP, totalXP, weeklyRank, totalRank = GetGuildRosterContribution(idx);
+			if weeklyXP then
+				guildMemberTemp[name]["XP"] = {};
+				guildMemberTemp[name]["XP"] = {
+					WeeklyXP = weeklyXP,
+					TotalXP = totalXP,
+					WeeklyRank = weeklyRank,
+					TotalRank = totalRank,
 				};
-				local weeklyXP, totalXP, weeklyRank, totalRank = GetGuildRosterContribution(idx);
-				if weeklyXP then
-					guildMemberTemp[name]["XP"] = {};
-						guildMemberTemp[name]["XP"] = {
-								WeeklyXP = weeklyXP,
-								TotalXP = totalXP,
-								WeeklyRank = weeklyRank,
-								TotalRank = totalRank,
-							};
-				end
-				cnt=cnt+1;
 			end
+			cnt=cnt+1;
 		end
+	end
 
-		SetGuildRosterShowOffline(showOfflineTemp);
-		if(numMembers==table.count(guildMemberTemp)) then
-			stat["_guildNum"] = cnt;
-			if(stat["_guildInfo"]~=numMembers) then
-				GuildInfo();
-				stat["_guildInfo"]=numMembers;
-			end
-			wowrostergp.sv["Members"]=guildMemberTemp;
-			--=--wowrostergp.sv["timestamp"]["Members"]=time();
+	SetGuildRosterShowOffline(showOfflineTemp);
+	if(numMembers==table.count(guildMemberTemp)) then
+		stat["_guildNum"] = cnt;
+		if(stat["_guildInfo"]~=numMembers) then
+			GuildInfo();
+			stat["_guildInfo"]=numMembers;
 		end
-	--end
+		wowrostergp.sv["Members"]=guildMemberTemp;
+		--=--wowrostergp.sv["timestamp"]["Members"]=time();
+	end
 end
+
 --[[
 local NEWS_MOTD = -1;				-- pseudo category
 local NEWS_GUILD_ACHIEVEMENT = 0;
@@ -395,58 +393,56 @@ local NEWS_GUILD_CREATE = 7;
 ]]--
 
 function wowrostergp:Scannews()
-
 	xx = 0;
 	local numGuildNews = GetNumGuildNews();
 	wowrostergp.sv["News"]={};
 	structnews = {};
 	for index=1, numGuildNews do
-	order = nil;
-	xx = xx+1;
+		order = nil;
+		xx = xx+1;
 		local isSticky, isHeader, newsType, text1, text2, id, data, data2, weekday, day, month, year = GetGuildNewsInfo(index);
-		
-		wowrostergp:Print("news type "..newsType.."");
-		
+
+		wowrostergp:Print("News type "..newsType.."");
+
 		if ( weekday) then
 			weekday = weekday + 1;
 		else
 			weekday = "";
 		end
-		
+
 		if ( day ) then
 			day = day + 1;
 		else
 			day = "";
 		end
-		
+
 		if ( month ) then
 			month = month + 1;
 		else
 			month = "";
 		end
-		
+
 		if ( year ) then
 			year = year;
 		else
 			year = "";
 		end
 
-			NewsType = gnews[newsType];
-			order = day.."/"..month.."/"..year or "";
+		NewsType = gnews[newsType];
+		order = day.."/"..month.."/"..year or "";
 
-			if( not structnews[NewsType] ) then
-				structnews[NewsType]={};
-			end
-		--[[	
-			if( not structnews[NewsType][xx] ) then
-				structnews[NewsType][xx]={};
-			end
-			]]--		
-			if ( weekday == 0 ) then
-				weekday = 7;
-			end
-			if (not isHeader) then
-
+		if( not structnews[NewsType] ) then
+			structnews[NewsType]={};
+		end
+--[[
+		if( not structnews[NewsType][xx] ) then
+			structnews[NewsType][xx]={};
+		end
+]]--
+		if ( weekday == 0 ) then
+			weekday = 7;
+		end
+		if (not isHeader) then
 			structnews[NewsType][xx] = {
 				--Type		= NewsType,
 				Typpe		= newsType,
@@ -462,18 +458,11 @@ function wowrostergp:Scannews()
 				Member 		= text1 or "",
 				Achievement	= text2 or "",
 				Issticky 	= isSticky or "",
-			}
-			end
-			
-		--end
-		
-		
+			};
+		end
 	end
 
 	wowrostergp.sv["News"] = structnews;
-
-
-
 end
 
 
@@ -501,8 +490,6 @@ function wowrostergp:ScanProfessions()
 	end
 	wowrostergp.sv["Trades"] = structtrade;
 end
-
-
 
 function wowrostergp:ScanGuildControl()
 	wowrostergp.sv["Control"]={};
@@ -533,9 +520,11 @@ function wowrostergp:ScanGuildControl()
 		end
 	end
 end
+
 function GuildControlGetRankFlagsNum(...)
 	return select("#",...);
 end
+
 function  wowrostergp:GuildControlGetRankFlagsStr(...)
 	local flags={};
 	for i=1,select("#",...) do
@@ -545,14 +534,13 @@ function  wowrostergp:GuildControlGetRankFlagsStr(...)
 	end
 	return(table.concat(flags,":"));
 end
+
 function  wowrostergp:GuildVaultFlags(...)
 	local str = "";
 	for i=1, MAX_GUILDBANK_TABS do
 		str = str ..strjoin(":",GetGuildBankTabPermissions(i))
 	end
 end
-
-
 
 function wowrostergp:GUILDBANKBAGSLOTS_CHANGED()
 	stat["Vaultavl"] = false;
@@ -600,7 +588,7 @@ function wowrostergp:ScanGuildBank()
 	if(wowrpref["guild"]["vault_money"]) then
 		wowrostergp:ScanGuildBankMoney()
 	end
-	wowrostergp:Print("guild bank scaned");
+	wowrostergp:Print("Guild vault scaned");
 end
 
 function wowrostergp.ScanGuildBankTab(tab)
@@ -741,5 +729,5 @@ end
 
 
 function wowrostergp:Print(...)
-	print("|cff33ff88WoWR-GP|r:", ...)
+	print("|cff33ff88WoWR-GP|r: ", ...)
 end
