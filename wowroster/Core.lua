@@ -16,7 +16,48 @@ local scan_nextskill=0;
 local scan_reagentcount=0;
 local scan_tradename=nil;
 local scan_cache=true;
---local icon;
+
+wowroster.betar = "1.0.0 r82";
+
+
+
+local LDB = LibStub("LibDataBroker-1.1", true)
+local LDBIcon = LibStub("LibDBIcon-1.0", true)
+
+local L_BT_LEFT = "|cffffff00Click|r to save character";
+local L_BT_SLEFT = "|cffffff00Shift Click|r to open Options";
+local L_BT_RIGHT = "|cffffff00Right-click|r to save guild";
+
+local wowrgpLDB = LibStub("LibDataBroker-1.1"):NewDataObject("wowrostermm", {
+	type = "launcher",
+	label = "WoWRoster Profiler",
+	OnClick = function(_, msg, down)
+	
+		if msg == "LeftButton" and IsShiftKeyDown() then
+			InterfaceOptionsFrame_OpenToCategory("WoWRoster Profiler")
+			
+		elseif msg == "LeftButton" then
+			wowroster:export();
+		elseif msg == "RightButton" then
+			wowrostergp:gpexport();
+		end
+		
+		--wroptions - InterfaceOptionsFrame_OpenToCategory("WoWRoster Profiler")
+	end,
+	icon = "Interface\\Icons\\ACHIEVEMENT_GUILDPERK_EVERYONES A HERO_RANK2",
+	OnTooltipShow = function(tooltip)
+		if not tooltip or not tooltip.AddLine then return end
+		tooltip:AddLine("WoWRoster Profiler")
+		tooltip:AddLine(L_BT_LEFT)
+		tooltip:AddLine(L_BT_SLEFT)
+		tooltip:AddLine(L_BT_RIGHT)
+	end,
+})
+
+local wricon = LibStub("LibDBIcon-1.0")
+
+
+
 
 wowroster.class = {WARRIOR=1,PALADIN=2,HUNTER=3,ROGUE=4,PRIEST=5,DEATHKNIGHT=6,SHAMAN=7,MAGE=8,WARLOCK=9,DRUID=11};
 wowroster.race = {Human=1,Orc=2,Dwarf=3,NightElf=4,Scourge=5,Tauren=6,Gnome=7,Troll=8,BloodElf=10,Draenei=11,Worgen=22};
@@ -104,6 +145,17 @@ local defaults={
 	},
 };
 
+local mmdefaults = {
+	profile = {
+		tooltip = "enabled",
+		minimap = {
+			hide = false,
+			minimapPos = 225.6416264355972,
+		},
+		
+	}
+}
+
 local UnitPower={"Rage","Focus","Energy","Happiness","Runes","RunicPower"};UnitPower[0]="Mana";
 local UnitSlots={"Head","Neck","Shoulder","Shirt","Chest","Waist","Legs","Feet","Wrist","Hands","Finger0","Finger1","Trinket0","Trinket1","Back","MainHand","SecondaryHand","Ranged","Tabard"};
 local UnitStatName={"Strength","Agility","Stamina","Intellect","Spirit"};
@@ -143,7 +195,14 @@ function wowroster:OnEnable()
 	)
 
 	self.buttons.save = button
-	wowroster:Print("Hello, WoWRoster Profiler Enabled and Loaded |cffff3399[1.0 r73]|r");
+	
+	if (not self.mm.profile.minimap["hide"]) then
+		wricon:Hide("WoWRoster Profiler")
+	else
+		wricon:Show("WoWRoster Profiler")
+	end
+						
+	wowroster:Print("Hello, WoWRoster Profiler Enabled and Loaded |cffff3399["..wowroster.betar.."]|r");
 	wowroster:Print("Open the menu, click Interface, then go to the Addons tab to configure");
 
 	wowroster:RegisterChatCommand("wrcp", "WOWRP_ChatCommandHandler");
@@ -231,6 +290,7 @@ function wowroster:OnDisable()
 	self.prefs = wowrpref;
 	LibStub("AceDB-3.0"):New("wowrpref",self.prefs)
 	LibStub("AceDB-3.0"):New("cpProfile",self.db)
+	LibStub("AceDB-3.0"):New("cpminimap",wowroster.mm)
 	if ( IsAddOnLoaded("WoWRoster Guild Profiler") ) then
 		LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
 	end
@@ -245,12 +305,18 @@ function wowroster:OnInitialize()
 		wowroster:Print("Defaults loaded, verson ".. self.prefs["ver"])
 	end
 	self.db = LibStub("AceDB-3.0"):New("cpProfile");
-	self.profileOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+	--self.profileOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 
 	local function profileUpdate()
 		addon:SendMessage("scan updated")
 	end
-
+	if (not cpminimap) then
+		self.mm = LibStub("AceDB-3.0"):New("cpminimap", mmdefaults, true);
+	else
+		self.mm = LibStub("AceDB-3.0"):New("cpminimap");
+	end
+	wricon:Register("WoWRoster Profiler", wowrgpLDB, self.mm.profile.minimap)
+	
 	--MinimapIcon:OnEnable();
 
 	self.tooltip = CreateFrame("GameTooltip",self.tooltip,UIParent,"GameTooltipTemplate");
@@ -441,22 +507,24 @@ function wowroster:makeconfig()
 				order = 9,
 				width = "full",
 			},
---[[
-			minimapicon = {
+
+			hide = {
 				type = "toggle",
 				name = "Mini Map Icon",
-				set = function(info, value)
-					wowrostermm.hide = not value
-					if wowrostermm.hide then
-						icon:Hide(addonName)
+				desc = "Show/Hide the MiniMap icon check for hide uncheck for show",
+				get = function() return wowroster.mm.profile.minimap.hide end,
+				set = function(_, value) 
+					wowroster.mm.profile.minimap.hide = value
+
+					if wowroster.mm.profile.minimap.hide then
+						wricon:Hide("WoWRoster Profiler")
 					else
-						icon:Show(addonName)
+						wricon:Show("WoWRoster Profiler")
 					end
-				end,
-				get = function(info) return (not wowrostermm.hide) end,
+				end,		
 				order = 10,
 			},
-]]--
+
 
 			Scan ={
 				type = "group",
@@ -741,8 +809,10 @@ function wowroster:makeconfig()
 					for k in pairs( cpProfile ) do
 						if (k ~= "profileKeys") then
 							for c in pairs( cpProfile[k].Character ) do
-								wowroster:Print("Char: "..c.." "..k);
-								t[c.."-"..k] = ""..c.." ("..k..")"
+								--wowroster:Print("Char: "..c.." "..k);
+								if (c ~= "profileKeys") then
+									t[c.."-"..k] = ""..c.." ("..k..")"
+								end
 							end
 						end
 					end
