@@ -10,29 +10,6 @@ local f = CreateFrame('GameTooltip', 'MyTooltip', UIParent, 'GameTooltipTemplate
 local LDB = LibStub("LibDataBroker-1.1", true)
 local LDBIcon = LibStub("LibDBIcon-1.0", true)
 
-local L_BT_LEFT = "|cffffff00Click|r to save character";
-local L_BT_RIGHT = "|cffffff00Right-click|r to save guild";
-
-local wowrgpLDB = LibStub("LibDataBroker-1.1"):NewDataObject("wowrostermm", {
-	type = "launcher",
-	label = "WoWRoster Profiler",
-	OnClick = function(_, msg)
-		if msg == "LeftButton" then
-			wowroster:export();
-		elseif msg == "RightButton" then
-			wowrostergp:gpexport();
-		end
-	end,
-	icon = "Interface\\Icons\\ACHIEVEMENT_GUILDPERK_EVERYONES A HERO_RANK2",
-	OnTooltipShow = function(tooltip)
-		if not tooltip or not tooltip.AddLine then return end
-		tooltip:AddLine("WoWRoster Profiler")
-		tooltip:AddLine(L_BT_LEFT)
-		tooltip:AddLine(L_BT_RIGHT)
-	end,
-})
-
-local icon = LibStub("LibDBIcon-1.0")
 
 local gnews = {"Player Achievements","Instances","Item Loots","Items Crafted","Items Purchesed","Guild Level","Player Level","opps1","opps2"};gnews[0]="Guild Achievements";gnews["-1"]="Guild Achievements";
 
@@ -58,21 +35,6 @@ local stat = {
 	Vaultavl=true,
 };
 
-local defaults = {
-	profile = {
-		tooltip = "enabled",
-		buttonlock = false,
-		outofrange = "button",
-		colors = { range = { r = 0.8, g = 0.1, b = 0.1 }, mana = { r = 0.5, g = 0.5, b = 1.0 } },
-		selfcastmodifier = true,
-		focuscastmodifier = true,
-		selfcastrightclick = false,
-		snapping = true,
-		blizzardVehicle = false,
-		minimapIcon = {},
-	}
-}
-
 local function findPanel(name, parent)
 	for i, button in next, InterfaceOptionsFrameAddOns.buttons do
 		if button.element then
@@ -86,7 +48,7 @@ end
 function wowrostergp:OnEnable()
 	self:RegisterEvent("GUILDBANKFRAME_OPENED");
 	self:RegisterEvent("ADDON_LOADED");
-	wowrostergp:Print("Hello, WoWRoster Guild Profiler Enabled and Loaded! |cffff3399[1.0 r73]|r");
+	wowrostergp:Print("Hello, WoWRoster Guild Profiler Enabled and Loaded! |cffff3399["..wowroster.betar.."]|r");
 	wowrostergp:Print("Open the menu, click Interface, then go to the Addons tab to configure");
 	wowrostergp:InitState();
 end
@@ -115,7 +77,6 @@ end
 
 function wowrostergp:OnDisable()
 	LibStub("AceDB-3.0"):New("cpProfile",wowrostergp.sv)
-	LibStub("AceDB-3.0"):New("cpminimap",self.mm)
 end
 
 function wowrostergp:OnInitialize()
@@ -126,14 +87,6 @@ function wowrostergp:OnInitialize()
 	end
 	wowrostergp:InitProfile();
 
-	self.mm = LibStub("AceDB-3.0"):New("cpminimap", {
-		profile = {
-			minimap = {
-				hide = false,
-			},
-		},
-	})
-	icon:Register("WoWRoster Profiler", wowrgpLDB, self.mm.profile.minimap)
 end
 
 function wowrostergp:InitState()
