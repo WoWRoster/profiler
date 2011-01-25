@@ -17,7 +17,7 @@ local scan_reagentcount=0;
 local scan_tradename=nil;
 local scan_cache=true;
 
-wowroster.betar = "1.0.0 r82";
+wowroster.betar = "1.0.0 r77";
 
 
 
@@ -308,7 +308,7 @@ function wowroster:OnInitialize()
 	--self.profileOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 
 	local function profileUpdate()
-		addon:SendMessage("scan updated")
+		wowroster:SendMessage("scan updated")
 	end
 	if (not cpminimap) then
 		self.mm = LibStub("AceDB-3.0"):New("cpminimap", mmdefaults, true);
