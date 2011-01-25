@@ -1,9 +1,11 @@
 ## Interface: 40000
 ## Title: WoWRoster Guild Profiler
 ## Notes: Guild data gathering utility for use with the WoWRoster.net profiler or for your own uses.
-## Author: Ulminia
-## Version: 0.1
+## Author: Ulminia (Joseph Foster)
+## X-Website: http://www.wowroster.net
+## Version: 1.0.0 r77
 ## RequiredDeps: wowroster
+
 embeds.xml
 
 localization.enUS.lua
