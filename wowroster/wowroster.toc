@@ -2,7 +2,8 @@
 ## Title: WoWRoster Character Profiler
 ## Notes: Character data gathering utility for use with the WoWRoster.net profiler or for your own uses.
 ## Author: Ulminia (Joseph Foster)
-## Version: 0.1
+## X-Website: http://www.wowroster.net
+## Version: 1.0.0 r77
 ## SavedVariables: wowrpref,cpProfile,cpminimap
 
 embeds.xml
