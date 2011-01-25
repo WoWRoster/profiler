@@ -287,8 +287,8 @@ wowroster.Str2Ary = function(str)
 end
 
 function wowroster:OnDisable()
-	self.prefs = wowrpref;
-	LibStub("AceDB-3.0"):New("wowrpref",self.prefs)
+	wowrpref = wowrpref;
+	LibStub("AceDB-3.0"):New("wowrpref",wowrpref)
 	LibStub("AceDB-3.0"):New("cpProfile",self.db)
 	LibStub("AceDB-3.0"):New("cpminimap",wowroster.mm)
 	if ( IsAddOnLoaded("WoWRoster Guild Profiler") ) then
@@ -297,12 +297,12 @@ function wowroster:OnDisable()
 end
 
 function wowroster:OnInitialize()
-	self.prefs = LibStub("AceDB-3.0"):New("wowrpref")
+	wowrpref = LibStub("AceDB-3.0"):New("wowrpref")
 
 	if(not wowrpref["enabled"]) then
 		wowrpref = defaults.profile;
-		self.prefs = wowrpref;
-		wowroster:Print("Defaults loaded, verson ".. self.prefs["ver"])
+		wowrpref = wowrpref;
+		wowroster:Print("Defaults loaded, verson ".. wowrpref["ver"])
 	end
 	self.db = LibStub("AceDB-3.0"):New("cpProfile");
 	--self.profileOptions = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
@@ -366,6 +366,8 @@ function wowroster:export()
 	wowroster:GetHonor();
 	wowroster:GetArena();
 	wowroster:ScanCompanions();
+	
+	wowroster:ScanPetInfo();
 
 	wowroster:Show();
 end
@@ -925,7 +927,7 @@ end
 
 function wowroster:InitState()
 	local _,class=UnitClass("player");
-	self.state = {
+	stat = {
 		_loaded=nil,_lock=nil,_bag=nil,_bank=nil,_mail=nil,
 		_server=GetRealmName(),_player=UnitName("player"),_class=class,
 		_skills={},
@@ -945,8 +947,8 @@ function wowroster:InitState()
 	self.queue={};
 
 	state = function(self,...)
-	if(not self.prefs) then return end
-	local state = self.prefs;
+	if(not wowrpref) then return end
+	local state = wowrpref;
 	local n=select("#",...);
 	local key=select(1,...);
 	if(n==2) then
@@ -973,8 +975,8 @@ end
 
 
 State = function(self,...)
-	if(not wowroster.prefs) then return end
-	local state = wowroster.prefs;
+	if(not wowrpref) then return end
+	local state = wowrpref;
 	local n=select("#",...);
 	local key=select(1,...);
 	if(n==2) then
@@ -1001,21 +1003,21 @@ end
 function wowroster:InitProfile()
 	if( not cpProfile ) then
 		cpProfile={}; end
-	if( not cpProfile[self.state["_server"]] ) then
-		cpProfile[self.state["_server"]]={}; end
-	if( not cpProfile[self.state["_server"]]["Character"] ) then
-		cpProfile[self.state["_server"]]["Character"]={}; end
-	if( not cpProfile[self.state["_server"]]["Character"][self.state["_player"]] ) then
-		cpProfile[self.state["_server"]]["Character"][self.state["_player"]]={}; end
+	if( not cpProfile[stat["_server"]] ) then
+		cpProfile[stat["_server"]]={}; end
+	if( not cpProfile[stat["_server"]]["Character"] ) then
+		cpProfile[stat["_server"]]["Character"]={}; end
+	if( not cpProfile[stat["_server"]]["Character"][stat["_player"]] ) then
+		cpProfile[stat["_server"]]["Character"][stat["_player"]]={}; end
 
-	self.db = cpProfile[self.state["_server"]]["Character"][self.state["_player"]];
+	self.db = cpProfile[stat["_server"]]["Character"][stat["_player"]];
 
 	if( self.db ) then
 		self.db["CPversion"]	= "1.0.0";
 		self.db["CPprovider"]	= "wowr";
 		self.db["DBversion"]	= "3.1";
-		self.db["Name"]			= self.state["_player"];
-		self.db["Server"]		= self.state["_server"];
+		self.db["Name"]			= stat["_player"];
+		self.db["Server"]		= stat["_server"];
 		self.db["Locale"]		= GetLocale();
 		self.db["Race"],self.db["RaceEn"],self.db["RaceId"]=UnitRace("player")
 		self.db["Class"],self.db["ClassEn"],self.db["ClassId"]=wowroster.UnitClass("player");
@@ -1025,10 +1027,164 @@ function wowroster:InitProfile()
 		self.db["timestamp"] = {};
 		self.db["Cached"] = {};
 		self:UpdateDate();
-		self.state["_loaded"] = true;
+		stat["_loaded"] = true;
 	end
-	return self.state["_loaded"];
+	return stat["_loaded"];
 end
+
+
+function wowroster:ScanPetInit(name)
+	if(name) then
+		if(not self.db["Pets"]) then
+			self.db["Pets"]={};
+		end
+		if(not self.db["Pets"][name]) then
+			self.db["Pets"][name]={};
+		end
+		if(not self.db["timestamp"]["Pets"]) then
+			self.db["timestamp"]["Pets"]={};
+		end
+	end
+end
+
+function wowroster:ScanPetStable()
+	if(wowrpref["scan"]["pet"] and (self:State("_class")=="HUNTER" and UnitLevel("player")>9)) then
+		local stablePets={};
+		for petIndex=0,GetNumStableSlots() do
+			local petIcon,petName,petLevel,petType,petLoyalty=GetStablePetInfo(petIndex);
+			if(petName and petName~=UNKNOWN) then
+				self:ScanPetInit(petName);
+				local structPets=self.db["Pets"];
+				structPets[petName]["Slot"]=petIndex;
+				structPets[petName]["Icon"]=rpgo.scanIcon(petIcon);
+				structPets[petName]["Name"]=petName;
+				structPets[petName]["Level"]=petLevel;
+				structPets[petName]["Type"]=petType;
+				structPets[petName]["Loyalty"]=petLoyalty;
+				stablePets[petName]=petIndex;
+				self.db["timestamp"]["Pets"][petName]=time();
+			end
+			stat["Stable"][petIndex]=petName;
+		end
+		for petName,_ in pairs( self.db["Pets"] ) do
+			if( not stablePets[petName] ) then
+				self.db["Pets"][petName]=nil;
+			end
+		end
+		for petName,_ in pairs( self.db["timestamp"]["Pets"] ) do
+			if( not stablePets[petName] ) then
+				self.db["timestamp"]["Pets"][petName]=nil;
+			end
+		end
+		self:ScanPetInfo();
+	elseif(self.db) then
+		self.db["Pets"]=nil;
+		stat["Pets"]={};
+	end
+end
+
+function wowroster:ScanPetInfo()
+	if(wowrpref["scan"]["pet"]) then
+		if(HasPetUI()) then
+			local petName=UnitName("pet");
+			if( petName and petName~=UNKNOWN ) then
+				self:ScanPetInit(petName);
+				local structPet=self.db["Pets"][petName];
+				structPet["Name"]=petName;
+				structPet["Type"]=UnitCreatureFamily("pet");
+				structPet["Experience"]=strjoin(":", GetPetExperience());
+				self:GetStats(structPet,"pet");
+				self:GetBuffs(structPet,"pet");
+				
+--WotLK
+			if( GetPetTalentPoints and (self:State("_class")=="HUNTER" and UnitLevel("player")>9) ) then
+				--self:GetTalents("pet");
+			end
+				self:GetPetSpellBook();
+				stat["Pets"][petName]=1;
+				self.db["timestamp"]["Pets"][petName]=time();
+			end
+		end
+	elseif(self.db) then
+		self.db["Pets"]=nil;
+		stat["Pets"]={};
+	end
+end
+
+function wowroster:GetPetAttack(structAttack,unit,prefix)
+
+
+	local mainHandAttackBase, mainHandAttackMod, offHandHandAttackBase, offHandAttackMod = UnitAttackBothHands("Pet")
+	local base, posBuff, negBuff = UnitAttackPower(unit)
+	local speed, offhandSpeed = UnitAttackSpeed(unit)
+	local minDamage, maxDamage, minOffHandDamage, maxOffHandDamage, physicalBonusPos, physicalBonusNeg, percent = UnitDamage(unit)
+	local base, modifier = UnitDefense(unit)
+--	local base, resistance, positive, negative = UnitResistance(unit, resistanceIndex)
+
+	local displayMin = max(floor(minDamage),1);
+	local displayMax = max(ceil(maxDamage),1);
+
+	minDamage = (minDamage / percent) - physicalBonusPos - physicalBonusNeg;
+	maxDamage = (maxDamage / percent) - physicalBonusPos - physicalBonusNeg;
+
+	local baseDamage = (minDamage + maxDamage) * 0.5;
+	local fullDamage = (baseDamage + physicalBonusPos + physicalBonusNeg) * percent;
+	local totalBonus = (fullDamage - baseDamage);
+	local damagePerSecond = (max(fullDamage,1) / speed);
+	--local damageText = getglobal(statFrame:GetName().."StatText");
+
+
+
+	structAttack["Melee"]={};
+	structAttack["Melee"]["MainHand"]={};
+	structAttack["Melee"]["MainHand"]["AttackSpeed"]=wowroster.round(speed,2);
+	structAttack["Melee"]["MainHand"]["AttackDPS"]=wowroster.round(damagePerSecond,1);
+	structAttack["Melee"]["MainHand"]["AttackRating"]=mainHandAttackBase+mainHandAttackMod;
+
+	--local tt=damageText:GetText();
+	--tt=wowroster.StripColor(tt);
+	structAttack["Melee"]["MainHand"]["DamageRange"]=""..wowroster.round(minDamage,0)..":"..wowroster.round(maxDamage,0).."";
+	
+	local base,posBuff,negBuff = UnitAttackPower(unit);
+	
+	apDPS=max((base+posBuff+negBuff),0)/ATTACK_POWER_MAGIC_NUMBER;
+	structAttack["Melee"]["AttackPower"] = strjoin(":", base,posBuff,negBuff);
+	structAttack["Melee"]["AttackPowerDPS"]=wowroster.round(apDPS,1);
+	structAttack["Melee"]["AttackPowerTooltip"]=format(MELEE_ATTACK_POWER_TOOLTIP,apDPS);
+
+end
+
+function wowroster:GetPetSpellBook()
+	if(wowrpref["scan"]["spells"]) then
+		local petName=UnitName("pet");
+		if( petName and petName~=UNKNOWN ) then
+			numSpells,_=HasPetSpells();
+			if( numSpells ) then
+				self:ScanPetInit(petName);
+				if (not self.db["Pets"][petName]["SpellBook"]) then
+					self.db["Pets"][petName]["SpellBook"]={};
+				end
+				local structPetSpell=self.db["Pets"][petName]["SpellBook"];
+				if (not structPetSpell["Spells"]) then
+					structPetSpell["Spells"]={};
+				end
+
+				local cnt=0;
+				for petSpellId=1,numSpells do
+	local spellName, spellRank, icon, powerCost, isFunnel, powerType, castingTime, minRange, maxRange = GetSpellInfo(petSpellId,BOOKTYPE_PET)
+					--local spellName=GetSpellName(petSpellId,BOOKTYPE_PET);
+					if ( spellName ) then
+						structPetSpell["Spells"][spellName] = wowroster:ScanSpellInfo(petSpellId,BOOKTYPE_PET);
+						cnt=cnt+1;
+					end
+				end
+				structPetSpell["Count"]=cnt;
+				stat["PetSpell"][petName]=cnt;
+			end
+		end
+	end
+end
+
 
 wowroster.UpdateDate = function(self,...)
 	if(not wowroster.db) then return; end;
@@ -1607,6 +1763,8 @@ function wowroster:GetStats(structStats,unit)
 		structStats["Experience"]=strjoin(":", UnitXP("player"),UnitXPMax("player"),GetXPExhaustion() or 0);
 		self:GetAttackRating(structStats["Attributes"],unit);
 		wowroster.db["timestamp"]["Attributes"]=time();
+	elseif(unit=="pet") then
+		self:GetPetAttack(structStats["Attributes"],unit,"Pet");
 	else
 		self:GetAttackRatingOld(structStats["Attributes"],unit,"Pet");
 	end
@@ -2299,7 +2457,7 @@ function wowroster:GetInventory()
 	end
 	for bagidx,bagid in pairs(containers) do
 		bagidx=bagidx-1;
-		if(not wowroster.state["Inventory"][bagidx] or not wowroster.state["Bag"][bagid]) then
+		if(not stat["Inventory"][bagidx] or not stat["Bag"][bagid]) then
 			structInventory["Bag"..bagidx]=wowroster:ScanContainer("Inventory",bagidx,bagid);
 		end
 	end
@@ -2324,7 +2482,7 @@ function wowroster:GetBank()
 
 	for bagidx,bagid in pairs(containers) do
 		bagidx=bagidx-1;
-		if(not wowroster.state["Bank"][bagidx] or not wowroster.state["Bag"][bagid]) then
+		if(not stat["Bank"][bagidx] or not stat["Bag"][bagid]) then
 			structBank["Bag"..bagidx]=wowroster:ScanContainer("Bank",bagidx,bagid);
 		end
 	end
@@ -2343,7 +2501,7 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 	if(bagid==0) then
 		itemName=GetBagName(bagid);
 		itemIcon="Button-Backpack-Up";
-		if(not wowroster.prefs["fixicon"]) then
+		if(not wowrpref["fixicon"]) then
 			itemIcon="Interface\\Buttons\\"..itemIcon;
 		end
 		GameTooltip:SetText(""..itemName.."",_,_,_,_);
@@ -2353,7 +2511,7 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 	elseif(bagid==KEYRING_CONTAINER) then
 		itemName = KEYRING;
 		itemIcon="UI-Button-KeyRing";
-		if(not wowroster.prefs["fixicon"]) then
+		if(not wowrpref["fixicon"]) then
 			itemIcon="Interface\\Buttons\\"..itemIcon;
 		end
 		GameTooltip:SetText(itemName);
@@ -2372,7 +2530,7 @@ function wowroster:ScanContainer(invgrp,bagidx,bagid)
 	local bagSlot = GetContainerNumSlots(bagid)
 	local bagInv = 0;
 	if(bagSlot==nil or bagSlot==0) then
-		wowroster.state[invgrp][bagidx]=nil
+		stat[invgrp][bagidx]=nil
 		return nil;
 	end
 
@@ -2605,7 +2763,7 @@ function wowroster:GetSpellBook()
 	for spellTab=1,GetNumSpellTabs() do
 		local spellTabname,spellTabtexture,offset,numSpells=GetSpellTabInfo(spellTab);
 		local cnt=0;
-		if(not self.state["SpellBook"][spellTabname] or self.state["SpellBook"][spellTabname]~=numSpells) then
+		if(not stat["SpellBook"][spellTabname] or stat["SpellBook"][spellTabname]~=numSpells) then
 			if (not spellTabtexture) then spellTabtexture = "achievement_guildperk_fasttrack_rank2"; end
 			structSpell[spellTabname]={
 				Icon	= wowroster.scanIcon(spellTabtexture),
