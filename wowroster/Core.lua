@@ -315,6 +315,12 @@ function wowroster:OnInitialize()
 	else
 		self.mm = LibStub("AceDB-3.0"):New("cpminimap");
 	end
+	
+	if (not self.mm.profile.minimap) then
+		self.mm = LibStub("AceDB-3.0"):New("cpminimap", mmdefaults, true);
+	end
+	
+	
 	wricon:Register("WoWRoster Profiler", wowrgpLDB, self.mm.profile.minimap)
 	
 	--MinimapIcon:OnEnable();
@@ -1019,6 +1025,7 @@ function wowroster:InitProfile()
 		self.db["Name"]			= stat["_player"];
 		self.db["Server"]		= stat["_server"];
 		self.db["Locale"]		= GetLocale();
+		self.db["TimePlayed"]	= RequestTimePlayed();
 		self.db["Race"],self.db["RaceEn"],self.db["RaceId"]=UnitRace("player")
 		self.db["Class"],self.db["ClassEn"],self.db["ClassId"]=wowroster.UnitClass("player");
 		self.db["Sex"],self.db["SexId"]=wowroster.UnitSex("player");
