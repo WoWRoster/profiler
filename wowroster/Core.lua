@@ -871,6 +871,11 @@ function wowroster:makeconfig()
 				get = false, -- no default value
 				set = function( info, v )
 				wowroster:Print("Code to delete data for cpProfiler[" .. v .. "]" )
+					if(cpProfile[GetRealmName()] and cpProfile[GetRealmName()]["Guild"] and cpProfile[GetRealmName()]["Guild"][v]) then
+						cpProfile[GetRealmName()]["Guild"][v]=nil;
+						isPurged=true;
+						wowroster:Print("Guild "..v.."@"..GetRealmName().." purged");
+					end
 				end,
 			},
 --[[
@@ -2329,6 +2334,7 @@ function wowroster:TRADE_SKILL_SHOW()
 				numReagents = GetTradeSkillNumReagents(idx);
 				description = GetTradeSkillDescription(idx)
 				reagentlist={};
+				reagentids={};
 				reagentc = 0;
 				local numReagents = GetTradeSkillNumReagents(idx);
 				local skillLink = GetTradeSkillItemLink(idx);
@@ -2336,12 +2342,13 @@ function wowroster:TRADE_SKILL_SHOW()
 				for j=1, numReagents, 1 do
 					local reagentName, reagentTexture, reagentCount, playerReagentCount = GetTradeSkillReagentInfo(idx, j);
 					local reagentLink = GetTradeSkillReagentItemLink(idx,j);
-
+					reagentID  = wowroster.GetReagentId( reagentLink );
+					table.insert(reagentids,{Item=reagentID,Count=reagentCount,Link=reagentLink});
 					if(reagentName) then
 						itemName, itemLink, itemRarity, itemLevel, _, itemType, itemSubType, _,_, itemTexture,_ = GetItemInfo(reagentName);
 						local ritemColor,_,_,_=wowroster.GetItemInfo(reagentLink);
 
-						reagentID  = wowroster.GetReagentId( reagentLink );
+					--	reagentID  = wowroster.GetReagentId( reagentLink );
 						GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE')
 						GameTooltip:SetTradeSkillItem(idx,j); --SetTradeSkillItem(idx)
 						tooltip = wowroster.scantooltip2();
@@ -2373,6 +2380,7 @@ function wowroster:TRADE_SKILL_SHOW()
 					itemLink= GetTradeSkillItemLink(idx) or "",
 					Reagentsnum = numReagents or "0",
 					Reagents = reagentlist or "",
+					ReagentIds = reagentids or "",
 					Icon = wowroster.scanIcon(Icon) or "",
 					desc  = description or "",
 					Tooltip	= tooltip,
