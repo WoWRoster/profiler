@@ -114,6 +114,7 @@ function wowrostergp:gpexport()
 	wowrostergp:GetGuildInfo();
 	wowrostergp:Scannews();
 	wowrostergp:ScanGuildControl();
+	wowrostergp:ScanGuildEventLog()
 	if(wowrpref["guild"]["trades"]) then
 		wowrostergp:ScanProfessions();
 	end
@@ -180,6 +181,45 @@ function wowrostergp:InitProfile()
 	end
 	return stat["_loaded"];
 end
+
+
+
+
+function wowrostergp:ScanGuildEventLog()
+	if(not wowrostergp.sv["EventLog"]) then
+		wowrostergp.sv["EventLog"]={};
+	end
+	local db = wowrostergp.sv["EventLog"];
+	local type, player1, player2, rank, year, month, day, hour;
+	local numEvents = GetNumGuildEvents();
+	local time=time();
+
+--RPGOGP:PrintDebug("EventLog",numEvents,table.getn(db));
+	if(numEvents >= table.getn(db)) then
+		for idx=1, numEvents, 1 do
+			type, player1, player2, rank, year, month, day, hour = GetGuildEventInfo(idx);
+			if ( not player1 ) then
+				player1 = UNKNOWN;
+			end
+			if ( not player2 ) then
+				player2 = UNKNOWN;
+			end
+			db[idx] = {
+				Type	= type,
+				Player1	= player1,
+				Player2	= player2,
+				Rank	= rank,
+				Time	= time,
+				LogTime	= strjoin(":",year, month, day, hour),
+			};
+		end
+	else
+		--rpgo.qInsert(RPGOGP.queue, {"GUILD_EVENT_LOG_UPDATE",RPGOGP.ScanGuildEventLog} );
+		QueryGuildEventLog();
+	end
+end
+
+
 
 function wowrostergp:UpdateDate()
 	if(not wowrostergp.sv) then return; end;
@@ -355,7 +395,7 @@ function wowrostergp:Scannews()
 		xx = xx+1;
 		local isSticky, isHeader, newsType, text1, text2, id, data, data2, weekday, day, month, year = GetGuildNewsInfo(index);
 
-		wowrostergp:Print("News type "..newsType.."");
+		--wowrostergp:Print("News type "..newsType.."");
 
 		if ( weekday) then
 			weekday = weekday + 1;
