@@ -2628,25 +2628,29 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		if(not itemName or not itemColor) then
 			itemName,itemColor=wowroster.GetItemInfoTT(self.tooltip);
 		end
-
+		slotx=nil;
 		if(bagid=="player") then
 			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE'); 
 			GameTooltip:SetInventoryItem("player",slot);
+			slotx = slot;
 			tooltip = wowroster.scantooltip2();
 			wowroster.tooltip:Hide();
 			link = GetInventoryItemLink("player",slot);
 		elseif(bagid==BANK_CONTAINER) then
 			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
 			GameTooltip:SetInventoryItem("player",BankButtonIDToInvSlotID(slot));--SetBagItem(bagid,slot);
+			slotx = BankButtonIDToInvSlotID(slot);
 			tooltip = wowroster.scantooltip2();
 			GameTooltip:Hide();
 		elseif(bagid==KEYRING_CONTAINER) then
 			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
 			GameTooltip:SetInventoryItem("player",KeyRingButtonIDToInvSlotID(slot));
+			slotx = KeyRingButtonIDToInvSlotID(slot);
 			tooltip = wowroster.scantooltip2();
 			GameTooltip:Hide();
 		else
 			GameTooltip:SetOwner(UIParent, 'ANCHOR_NONE');  
+			slotx = slot;
 			GameTooltip:SetBagItem(bagid,slot);
 			tooltip = wowroster.scantooltip2();
 			GameTooltip:Hide();
@@ -2668,7 +2672,8 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		};
 
 		if( wowroster.ItemHasGem(itemID) ) then
-			local gem1, gem2, gem3 = GetInventoryItemGems(slot);
+			wowroster:Print("gem scan "..slot.."-"..slotx.."");
+			local gem1, gem2, gem3 = GetInventoryItemGems(slotx);
 			local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemID,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
 			itemBlock["Gem"] = {};
 
