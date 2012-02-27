@@ -467,13 +467,14 @@ function wowrostergp:ScanProfessions()
 	for index = 1, numTradeSkill do
 		local skillID,isCollapsed,iconTexture,headerName,numOnline,numPlayers,playerName,class,online,zone,skill,classFileName = GetGuildTradeSkillInfo(index);
 			if ( headerName ) then
-				skillHeader=headerName;
+				local skillHeader=headerName;
 				structtrade[skillHeader] = {
 					skid = skillID,
 					icon = iconTexture,
 					
 				};
 			elseif( skillHeader ) then
+			structtrade[skillHeader][playerName] = {};
 				structtrade[skillHeader][playerName] = {
 					name = playerName,
 					class = class,
@@ -612,8 +613,9 @@ function wowrostergp.ScanGuildBankTab(tab)
 	if(wowrpref["guild"]["vault_log"]) then
 		wowrostergp.ScanGuildBankTabLog(tab)
 	end
+	local numTransactions = GetNumGuildBankTransactions(tab);
 
-	wowrostergp:Print("Tab "..tab.." items "..bagInv.."");
+	wowrostergp:Print("Tab "..tab.." items "..bagInv.." log entrys "..numTransactions.."");
 	stat["Vault"]["Tab"..tab]={slot=MAX_GUILDBANK_SLOTS_PER_TAB,inv=bagInv};
 end
 
