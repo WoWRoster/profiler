@@ -104,6 +104,7 @@ local stat = {
 	Professions={}, SpellBook={},
 	Pets={}, Stable={}, PetSpell={}, PetTalent={},
 	Companions={},
+	Achi={},
 };
 
 local defaults={
@@ -228,7 +229,11 @@ function wowroster:WOWRP_ChatCommandHandler(argline)
 
 		return;
 	end
-
+--wowroster:Achi()
+	if (msg[1] == "achi") then
+		wowroster:Achi();
+		return;
+	end
 	if (msg[1] == "purge") then
 		if ( msg[2] == "all" ) then
 			cpProfile=nil;
@@ -951,7 +956,7 @@ function wowroster:InitState()
 		Mail=nil,
 		Honor=nil,
 		Bag={},Inventory={},Bank={},
-		Professions={}, SpellBook={},
+		Professions={}, SpellBook={}, Achi={},
 		Pets={}, Stable={}, PetSpell={}, PetTalent={},
 		Companions={},
 	};
@@ -2672,7 +2677,7 @@ function wowroster:ScanItemInfo(itemstr,itemtexture,itemcount,slot,bagid)
 		};
 
 		if( wowroster.ItemHasGem(itemID) ) then
-			wowroster:Print("gem scan "..slot.."-"..slotx.."");
+			--wowroster:Print("gem scan "..slot.."-"..slotx.."");
 			local gem1, gem2, gem3 = GetInventoryItemGems(slotx);
 			local _,_,_,_,gid1,gid2,gid3,_,_,_=string.find(itemID,"([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+):([-%d]+)");
 			itemBlock["Gem"] = {};
@@ -2832,6 +2837,62 @@ wowroster.GetSpellID = function(spellStr)
 	local id;
 	if(spellStr) then _,_,id=string.find(spellStr,"|Hspell:(%d+)|h"); end
 	return tonumber(id);
+end
+
+
+--[[
+we are gona scan for achievement ids... because i want them..
+]]--
+function wowroster:Achi()
+
+	wowroster.db["Achi"]=nil;
+	wowroster.db["Crit"]=nil;
+	local cats = GetCategoryList()
+	local achievementID, achCompleted
+	local prevID
+	local structAchi={};
+	local structCrit={};
+	
+	for _, categoryID in ipairs(cats) do
+		
+		local pname, parentID, flags = GetCategoryInfo(categoryID)
+		structAchi[categoryID] = {};
+		structAchi[categoryID] = {
+					pID = parentID,
+					name = pname,
+					cID = categoryID,
+					flages = flags
+			};
+		--structAchi[pname][categoryID] = {};
+		for i = 1, GetCategoryNumAchievements(categoryID) do
+			local achievementID,aname,points,achCompleted,month,day,year,description,flags,icon,rewardText,isGuildAch = GetAchievementInfo(categoryID, i);
+			structCrit[achievementID] ={};
+			structAchi[categoryID][achievementID] = {
+					achID = achievementID,	
+					desc=description,
+					icon = wowroster.scanIcon(icon),
+					point = points,
+					name = aname or ""
+			};
+			
+--			
+			local count = GetAchievementNumCriteria(achievementID)
+			for c = 1, count do
+			
+			local description,type,comp,quant,reqQuant,_,flags,assetID,quantString,criteriaID = GetAchievementCriteriaInfo(achievementID, c)
+				structCrit[achievementID][criteriaID] = {
+					cid=criteriaID,
+					desc=description,
+					type=type,
+					rquantity=reqquant,
+					c_string=quantString					
+				};
+			end
+	--]]--		
+		end
+	end
+	wowroster.db["Achi"] = structAchi;
+	wowroster.db["Crit"] = structCrit;
 end
 
 --[[
