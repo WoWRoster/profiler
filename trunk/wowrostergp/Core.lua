@@ -262,22 +262,22 @@ function wowrostergp:GetGuildInfo()
 		stat["_guilded"]=false;
 		return;
 	end
-
+	strict = {};
 	stat["_guild"] = GetGuildInfo("player");
 	local numGuildMembers, onlineMembers = GetNumGuildMembers();
 
 	QueryGuildEventLog();
 
 	stat["_guilded"]=true;
-	wowrostergp.sv["Info"] = GetGuildInfoText();
-	wowrostergp.sv["FactionEn"],wowrostergp.sv["Faction"] = UnitFactionGroup("player");
+	strict["Info"] = GetGuildInfoText();
+	strict["FactionEn"],strict["Faction"] = UnitFactionGroup("player");
 	if(numGuildMembers~=0) then
-		wowrostergp.sv["NumMembers"]=numGuildMembers;
+		strict["NumMembers"]=numGuildMembers;
 		wowrostergp:ScanGuildMembers(numGuildMembers);
 		stat["_guildNum"]=numGuildMembers;
 	end
 	wowrostergp:ScanGuildMOTD();
-	wowrostergp.sv["ScanInfo"] = {
+	strict["ScanInfo"] = {
 		Character = stat["_player"],
 		IsGuildLeader = (IsGuildLeader()==1 or false),
 		HasOfficerNote = (stat["_officer"]==1 or false)
