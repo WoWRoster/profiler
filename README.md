@@ -1,4 +1,4 @@
-# profiler
+# wowroster-profiler
 
 WoWRosterProfiler is a World of Warcraft addon that extracts character info including stats, equipment, inventory (bags & bank), trade skills, spellbook, mail, and pets.
 
